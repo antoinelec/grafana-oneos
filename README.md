@@ -8,14 +8,19 @@ This is a first skeleton to be extended further
 # Installation
 
 Pull the this repo:
-> git clone git@github.com:antoinelec/grafana-oneos.git
+```cmd
+git clone git@github.com:antoinelec/grafana-oneos.git
+```
 
 Execute the init script, which will create a dummy https certificate and create init files:
-> bash init.sh
+```cmd
+bash init.sh
+```
 
 Launch it:
-> docker compose up -d
-
+```cmd
+docker compose up -d
+```
 
 # Verify Installation
 
@@ -30,8 +35,9 @@ root@AP-2DMI7YkhmjZh:~#
 ```
 
 You may want to check logs with:
-> docker compose logs -f grafana
-
+```cmd
+docker compose logs -f grafana
+```
 
 # How add a monitored device
 
@@ -43,11 +49,17 @@ end
 ```
 
 Edit the file telegraf/telegraf.conf. The URL of devices is within that object:
-```[[inputs.snmp]]
+```
+  [[inputs.snmp]]
   agents = [ "udp://192.168.56.107:161",
 		"udp://192.168.56.108:161",
 		"udp://192.168.56.109:161"
              ]
 
+```
+
+Then, restart telegraf to take into account the changes:
+```cmd
+docker compose restart telegraf
 ```
 
