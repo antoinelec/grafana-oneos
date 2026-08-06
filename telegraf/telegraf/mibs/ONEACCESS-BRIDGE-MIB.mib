@@ -1,0 +1,265 @@
+ONEACCESS-BRIDGE-MIB DEFINITIONS ::= 
+BEGIN
+
+--------------------------------------------------------------------
+-- Imports
+--------------------------------------------------------------------
+   IMPORTS
+      DisplayString, MacAddress
+		   FROM SNMPv2-TC
+      MODULE-IDENTITY, OBJECT-TYPE,Integer32,Unsigned32
+         FROM SNMPv2-SMI
+      MODULE-COMPLIANCE, OBJECT-GROUP
+         FROM SNMPv2-CONF
+      oacExpIMDot1dBridge,oacMIBModules
+         FROM ONEACCESS-GLOBAL-REG;
+
+--------------------------------------------------------------------
+-- Module Entity
+--------------------------------------------------------------------
+   oacdot1dBridgeMIBModule MODULE-IDENTITY
+      LAST-UPDATED   "202101100000Z"
+      ORGANIZATION   "OneAccess"
+      CONTACT-INFO   "mib-support@ekinops.com"
+      DESCRIPTION    "This MIB module describes bridge objects."
+      
+      REVISION "202101100000Z"
+      DESCRIPTION
+         "Initial version."
+                         
+      ::= { oacMIBModules 2000 }
+
+--------------------------------------------------------------------
+-- Entry Point (cf. ONEACCESS-GLOBAL-REG.mib)
+--------------------------------------------------------------------
+
+   oacDot1dTp OBJECT IDENTIFIER ::= { oacExpIMDot1dBridge 3 }
+   
+   oacDot1dFdbTable  OBJECT IDENTIFIER ::= { oacDot1dTp 3 }
+   
+--------------------------------------------------------------------
+-- Shared Forwarding Table
+--------------------------------------------------------------------
+
+   oacDot1dTpFdbSharedTable OBJECT-TYPE
+       SYNTAX      SEQUENCE OF Dot1dTpFdbSharedEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+           "A table that contains information about unicast
+           entries for which the bridge has forwarding and/or
+           filtering information.  This information is used
+           by the transparent bridging function in
+           determining how to propagate a received frame."
+       ::= { oacDot1dFdbTable 1 }
+   
+   oacDot1dTpFdbSharedEntry OBJECT-TYPE
+       SYNTAX      Dot1dTpFdbSharedEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+           "Information about a specific unicast MAC address
+           for which the bridge has some forwarding and/or
+           filtering information."
+       INDEX   { oacDot1dTpFdbSharedBridgeId, oacDot1dTpFdbSharedAddress }
+       ::= { oacDot1dTpFdbSharedTable 1 }
+   
+   Dot1dTpFdbSharedEntry ::=
+       SEQUENCE {
+          oacDot1dTpFdbSharedBridgeId   Integer32,
+          oacDot1dTpFdbSharedAddress    MacAddress,
+          oacDot1dTpFdbSharedPort       Integer32 (1..2147483647),   
+          oacDot1dTpFdbSharedStatus     INTEGER
+       }
+   
+   oacDot1dTpFdbSharedBridgeId OBJECT-TYPE
+       SYNTAX      Integer32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "Unique identifier of the bridge-group."
+      ::= { oacDot1dTpFdbSharedEntry 1 }
+      
+   oacDot1dTpFdbSharedAddress OBJECT-TYPE
+       SYNTAX      MacAddress
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "A unicast MAC address for which the bridge has
+           forwarding and/or filtering information."
+       ::= { oacDot1dTpFdbSharedEntry 2 }
+   
+   oacDot1dTpFdbSharedPort OBJECT-TYPE
+       SYNTAX      Integer32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "Either the value '0', or the port number of the port on
+           which a frame having a source address equal to the value
+           of the corresponding instance of dot1dTpFdbAddress has
+           been seen.  A value of '0' indicates that the port
+           number has not been learned, but that the bridge does
+           have some forwarding/filtering information about this
+           address (e.g., in the dot1dStaticTable).  Implementors
+           are encouraged to assign the port value to this object
+           whenever it is learned, even for addresses for which the
+           corresponding value of dot1dTpFdbStatus is not
+           learned(3)."
+       ::= { oacDot1dTpFdbSharedEntry 3 }
+       
+   oacDot1dTpFdbSharedStatus OBJECT-TYPE
+       SYNTAX      INTEGER {
+                       other(1),
+                       invalid(2),
+                       learned(3),
+                       self(4),
+                       mgmt(5)
+                   }
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "The status of this entry.  The meanings of the
+           values are:
+               other(1) - none of the following.  This would
+                   include the case where some other MIB object
+                   (not the corresponding instance of
+                   dot1dTpFdbPort, nor an entry in the
+                   dot1dStaticTable) is being used to determine if
+                   and how frames addressed to the value of the
+                   corresponding instance of dot1dTpFdbAddress are
+                   being forwarded.
+               invalid(2) - this entry is no longer valid (e.g.,
+                   it was learned but has since aged out), but has
+                   not yet been flushed from the table.
+               learned(3) - the value of the corresponding instance
+                   of dot1dTpFdbPort was learned, and is being
+                   used.
+               self(4) - the value of the corresponding instance of
+                   dot1dTpFdbAddress represents one of the bridge's
+                   addresses.  The corresponding instance of
+                   dot1dTpFdbPort indicates which of the bridge's
+                   ports has this address.
+               mgmt(5) - the value of the corresponding instance of
+                   dot1dTpFdbAddress is also the value of an
+                   existing instance of dot1dStaticAddress."
+       ::= { oacDot1dTpFdbSharedEntry 4 }
+    
+--------------------------------------------------------------------
+-- Vlan Aware Forwarding Table 
+--------------------------------------------------------------------
+
+   oacDot1dTpFdbVlanTable OBJECT-TYPE
+       SYNTAX      SEQUENCE OF Dot1dTpFdbVlanEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+           "A table that contains information about unicast
+           entries for which the bridge has forwarding and/or
+           filtering information.  This information is used
+           by the transparent bridging function in
+           determining how to propagate a received frame."
+       ::= { oacDot1dFdbTable 2 }
+   
+   oacDot1dTpFdbVlanEntry OBJECT-TYPE
+       SYNTAX      Dot1dTpFdbVlanEntry
+       MAX-ACCESS  not-accessible
+       STATUS      current
+       DESCRIPTION
+           "Information about a specific unicast MAC address
+           for which the bridge has some forwarding and/or
+           filtering information."
+       INDEX   { oacDot1dTpFdbVlanBridgeId, oacDot1dTpFdbVlanVlanId, oacDot1dTpFdbVlanAddress }
+       ::= { oacDot1dTpFdbVlanTable 1 }
+   
+   Dot1dTpFdbVlanEntry ::=
+       SEQUENCE {
+          oacDot1dTpFdbVlanBridgeId   Integer32,
+          oacDot1dTpFdbVlanVlanId     Integer32,
+          oacDot1dTpFdbVlanAddress    MacAddress,
+          oacDot1dTpFdbVlanPort       Integer32 (1..2147483647),   -- = MIB-2/InterfaceIndex
+          oacDot1dTpFdbVlanStatus     INTEGER
+       }
+   
+   oacDot1dTpFdbVlanBridgeId OBJECT-TYPE
+       SYNTAX      Integer32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "Unique identifier of the bridge-group."
+      ::= { oacDot1dTpFdbVlanEntry 1 }
+      
+   oacDot1dTpFdbVlanVlanId OBJECT-TYPE
+       SYNTAX      Integer32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "The VLAN id for which the bridge has
+           forwarding and/or filtering information."
+       ::= { oacDot1dTpFdbVlanEntry 2 }
+
+   oacDot1dTpFdbVlanAddress OBJECT-TYPE
+       SYNTAX      MacAddress
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "A unicast MAC address for which the bridge has
+           forwarding and/or filtering information."
+       ::= { oacDot1dTpFdbVlanEntry 3 }
+
+   oacDot1dTpFdbVlanPort OBJECT-TYPE
+       SYNTAX      Integer32
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "Either the value '0', or the port number of the port on
+           which a frame having a source address equal to the value
+           of the corresponding instance of dot1dTpFdbAddress has
+           been seen.  A value of '0' indicates that the port
+           number has not been learned, but that the bridge does
+           have some forwarding/filtering information about this
+           address (e.g., in the dot1dStaticTable).  Implementors
+           are encouraged to assign the port value to this object
+           whenever it is learned, even for addresses for which the
+           corresponding value of dot1dTpFdbStatus is not
+           learned(3)."
+       ::= { oacDot1dTpFdbVlanEntry 4 }
+       
+   oacDot1dTpFdbVlanStatus OBJECT-TYPE
+       SYNTAX      INTEGER {
+                       other(1),
+                       invalid(2),
+                       learned(3),
+                       self(4),
+                       mgmt(5)
+                   }
+       MAX-ACCESS  read-only
+       STATUS      current
+       DESCRIPTION
+           "The status of this entry.  The meanings of the
+           values are:
+               other(1) - none of the following.  This would
+                   include the case where some other MIB object
+                   (not the corresponding instance of
+                   dot1dTpFdbPort, nor an entry in the
+                   dot1dStaticTable) is being used to determine if
+                   and how frames addressed to the value of the
+                   corresponding instance of dot1dTpFdbAddress are
+                   being forwarded.
+               invalid(2) - this entry is no longer valid (e.g.,
+                   it was learned but has since aged out), but has
+                   not yet been flushed from the table.
+               learned(3) - the value of the corresponding instance
+                   of dot1dTpFdbPort was learned, and is being
+                   used.
+               self(4) - the value of the corresponding instance of
+                   dot1dTpFdbAddress represents one of the bridge's
+                   addresses.  The corresponding instance of
+                   dot1dTpFdbPort indicates which of the bridge's
+                   ports has this address.
+               mgmt(5) - the value of the corresponding instance of
+                   dot1dTpFdbAddress is also the value of an
+                   existing instance of dot1dStaticAddress."
+       ::= { oacDot1dTpFdbVlanEntry 5 }
+
+END
+

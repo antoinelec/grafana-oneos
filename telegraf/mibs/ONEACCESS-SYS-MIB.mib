@@ -1,0 +1,1115 @@
+--          *****************************
+--          *                           *
+--          *         ONEOS MIB         *
+--          *                           *
+--          *****************************
+--
+--          ONEOS_MIB_STD_V05.1.R005_E001
+--
+--          Creation date : 18/02/2003
+--
+--          Compatibility with ONEOS_V31
+--
+--          Compatibility with ONEOS_V32
+--
+--          Compatibility with ONEOS_V33
+--
+--          Compatibility with ONEOS_V34
+--
+--          Modified for ONEOS_V32R2E26 : oacSysIMSysMainBoard added
+--
+--          10032005 : Add hardware description
+--
+--          20060111 : Add oacSysSecureCrashlogCount
+--
+--          20100412 : Add oacSysStartCaused
+--
+--          20100811 : Add objects for Factory area  description
+--
+--          20120824 : Add object Product Name
+--
+--          20191019 : Added monitor objects for PSU, temp sensors and fans
+--
+--          20200427 : added dying gasp notification type
+--
+     ONEACCESS-SYS-MIB DEFINITIONS ::= BEGIN
+
+     IMPORTS
+		MODULE-IDENTITY, OBJECT-TYPE, Unsigned32, Counter64, Gauge32, Integer32,
+        NOTIFICATION-TYPE
+			FROM SNMPv2-SMI
+		MODULE-COMPLIANCE, OBJECT-GROUP
+			FROM SNMPv2-CONF
+	    TEXTUAL-CONVENTION, DisplayString
+            FROM SNMPv2-TC
+		oacExpIMSystem,oacMIBModules
+			FROM ONEACCESS-GLOBAL-REG;
+
+     oacSysMIBModule MODULE-IDENTITY
+        LAST-UPDATED    "201405050001Z"
+        ORGANIZATION    " OneAccess "
+         CONTACT-INFO
+           "Pascal KESTELOOT
+            Postal: ONE ACCESS
+                    381 Avenue du Général de Gaulle
+                    92140 Clamart, France
+		    FRANCE
+
+            Tel: (+33) 01 41 87 70 00
+            Fax: (+33) 01 41 87 74 00
+
+            E-mail: pascal.kesteloot@oneaccess-net.com"
+
+	    DESCRIPTION
+		            "Add Memory Objects for products above 4GB"
+
+        REVISION	"201503200001Z"
+
+	    DESCRIPTION
+		            "Add Cpu usage table for multicore HW"
+
+        REVISION	"201405050001Z"
+
+        DESCRIPTION
+                        "Contact updated"
+        REVISION        "201106150000Z"
+
+	    DESCRIPTION
+		            "oacExpIMSysFactory OID updated"
+        REVISION	"201012140001Z"
+
+       DESCRIPTION  "Add objects for Factory area  description."
+        REVISION     "201008111000Z"  -- August 11, 2010
+
+        DESCRIPTION
+			"Fixed minor corrections. changed oacExpIMSysHwcDescription
+			type from OCTET STRING to DisplayString."
+		REVISION	"201007081000Z"
+
+         DESCRIPTION
+              "This MIB module describes system Management objects."
+
+	::= { oacMIBModules 671 }
+
+
+-- ----------------------------------------------------------------------------
+-- >> textual conventions
+-- ----------------------------------------------------------------------------
+
+OASysHwcClass ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION
+  	"The object specify the class of OASysHwc"
+	SYNTAX INTEGER
+  {
+    board(0),
+    cpu(1),
+    slot(2)
+   }
+
+OASysHwcType ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION
+  	"The object specify the type of OASysHwc"
+	SYNTAX INTEGER
+  {
+    mainboard(0),
+    microprocessor(1),
+    ram(2),
+    flash(3),
+    dsp(4),
+    uplink(5),
+    module(6)
+  }
+
+OASysCoreType ::= TEXTUAL-CONVENTION
+	STATUS current
+	DESCRIPTION
+  	"The object specify the type of Core usage"
+	SYNTAX INTEGER
+  {
+    controlplane(0),
+    dataforwarding(1),
+    application(2),
+    mixed(3)
+  }
+
+OASysUnsigned64 ::= TEXTUAL-CONVENTION
+    STATUS          current
+    DESCRIPTION
+        "Unsigned 64 bit integer SYNTAX Counter64 should be used for encoding"
+    SYNTAX          Counter64
+
+OASysPsuStatus ::= TEXTUAL-CONVENTION
+  STATUS current
+  DESCRIPTION
+    "The object specifies the PSU status"
+  SYNTAX INTEGER
+  {
+    unknown(0),
+    powered(1),
+    notPowered(2),
+    notInserted(3)
+  }
+
+OASysPsuSource ::= TEXTUAL-CONVENTION
+  STATUS current
+  DESCRIPTION
+    "The object specifies the PSU source"
+  SYNTAX INTEGER
+  {
+    unknown(0),
+    ac(1),
+    dc(2),
+    externalPowerSupply(3),
+    internalRedundant(4)
+  }
+
+OASysFanStatus ::= TEXTUAL-CONVENTION
+  STATUS current
+  DESCRIPTION
+    "The object specifies the fan status"
+  SYNTAX INTEGER
+  {
+    unknown(0),
+    normal(1),
+    defect(2)
+  }
+
+OASysIOContactValue ::= TEXTUAL-CONVENTION
+  STATUS current
+  DESCRIPTION
+    "The object specifies the current io-contact status"
+  SYNTAX INTEGER
+  {
+    low(0),
+    high(1)
+  }
+  
+OASysIOContactConfig ::= TEXTUAL-CONVENTION
+  STATUS current
+  DESCRIPTION
+    "The object specifies the current config of the io-contact"
+  SYNTAX INTEGER
+  {
+    triggerWhenHigh(0),
+    triggerWhenLow(1),
+    disabled(2),
+    outputOpen(3),
+    outputClosed(4)
+  }
+  
+OASysReboot ::= TEXTUAL-CONVENTION
+  STATUS current
+  DESCRIPTION
+    "The object to reboot the system"
+  SYNTAX INTEGER
+  {
+    reboot(1)
+  }
+-- ----------------------------------------------------------------------------
+
+oacExpIMSysStatistics OBJECT IDENTIFIER ::= { oacExpIMSystem 1 }
+oacExpIMSysHardwareDescription OBJECT IDENTIFIER ::= { oacExpIMSystem 2 }
+
+oacSysMemStatistics OBJECT IDENTIFIER ::= { oacExpIMSysStatistics 1 }
+oacSysCpuStatistics OBJECT IDENTIFIER ::= { oacExpIMSysStatistics 2 }
+
+oacSysSecureCrashlogCount OBJECT-TYPE
+  SYNTAX  INTEGER
+  MAX-ACCESS  read-only
+  STATUS  current
+  DESCRIPTION
+  	"The number of avaiable crash logs"
+  ::= { oacExpIMSysStatistics 100 }
+
+oacSysStartCaused OBJECT-TYPE
+  SYNTAX  DisplayString (SIZE (0..255))
+  MAX-ACCESS  read-only
+  STATUS  current
+  DESCRIPTION
+  	"Cause of system start"
+  ::= { oacExpIMSysStatistics 200 }
+
+oacSysIMSysMainBoard OBJECT IDENTIFIER ::= { oacExpIMSysHardwareDescription 1 }
+
+oacExpIMSysHwComponents OBJECT IDENTIFIER ::= { oacExpIMSysHardwareDescription 2 }
+
+oacExpIMSysFactory OBJECT IDENTIFIER ::= { oacExpIMSysHardwareDescription 3 }
+
+oacExpIMSysMonComponents OBJECT IDENTIFIER ::= { oacExpIMSysHardwareDescription 4 }
+
+-- the following two OBJECT IDENTIFIERS are used to define SNMPv2 Notifications
+-- that are backward compatible with SNMPv1 Traps.
+oacExpIMSysMonNotificationPrefix OBJECT IDENTIFIER ::= { oacExpIMSystem 3 }
+oacExpIMSysMonNotifications      OBJECT IDENTIFIER ::= { oacExpIMSysMonNotificationPrefix 0 }
+
+oacSysIMSysMainIdentifier OBJECT-TYPE
+		SYNTAX OBJECT IDENTIFIER
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"The vendor's authoritative identification of
+			the main board. This value is allocated within
+			the SMI enterprise subtree"
+	 ::= { oacSysIMSysMainBoard 1 }
+
+oacSysIMSysMainManufacturedIdentity OBJECT-TYPE
+	    SYNTAX      DisplayString (SIZE (0..255))
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Unique ID string self to each equipment.
+			 By default, it is retrieved from the
+			 manufacturer of the equipment. Can also be
+			 configure by CLI ( see command  'snmp chassis-id')
+			 for customer purposes"
+	 ::= { oacSysIMSysMainBoard 2 }
+
+oacSysIMSysMainManufacturedDate OBJECT-TYPE
+	      SYNTAX      DisplayString (SIZE (0..255))
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the date of the manufacturing of
+			the equipment"
+	 ::= { oacSysIMSysMainBoard 3 }
+
+oacSysIMSysMainCPU OBJECT-TYPE
+	      SYNTAX      DisplayString (SIZE (0..255))
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Description of the main CPU used
+			on the main board"
+	 ::= { oacSysIMSysMainBoard 4 }
+
+oacSysIMSysMainBSPVersion OBJECT-TYPE
+	      SYNTAX      DisplayString (SIZE (0..255))
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the current BSP version supported
+			on the equipment"
+	 ::= { oacSysIMSysMainBoard 5 }
+
+oacSysIMSysMainBootVersion OBJECT-TYPE
+	      SYNTAX      DisplayString (SIZE (0..255))
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the current boot version supported
+			on the equipment"
+	 ::= { oacSysIMSysMainBoard 6 }
+
+oacSysIMSysMainBootDateCreation OBJECT-TYPE
+	      SYNTAX      DisplayString (SIZE (0..255))
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"the date the current boot version
+			has been generated"
+	 ::= { oacSysIMSysMainBoard 7 }
+
+
+-- ----------------------------------------------------------------------------
+-- Memory objects
+-- ----------------------------------------------------------------------------
+
+oacSysMemoryFree OBJECT-TYPE
+		SYNTAX Unsigned32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"The number of bytes in free memory
+			For a product with more than 4GB of total memory
+			this value is 0
+			and the effective value is oacSysHCMemoryFree "
+	 ::= { oacSysMemStatistics 1 }
+
+oacSysMemoryAllocated OBJECT-TYPE
+		SYNTAX Unsigned32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"The number of bytes in allocated memory
+			For a product with more than 4GB of total memory
+			this value is 0
+			and the effective value is oacSysHCMemoryAllocated "
+	 ::= { oacSysMemStatistics 2 }
+
+oacSysMemoryTotal OBJECT-TYPE
+		SYNTAX Unsigned32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Total number of bytes in the system memory partition
+			For a product with more than 4GB of total memory
+			this value is 0
+			and the effective value is oacSysHCMemoryTotal "
+	 ::= { oacSysMemStatistics 3 }
+
+oacSysMemoryUsed OBJECT-TYPE
+		SYNTAX Unsigned32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Used memory expressed in percent of the total memory size "
+	 ::= { oacSysMemStatistics 4 }
+
+oacSysHCMemoryFree OBJECT-TYPE
+		SYNTAX OASysUnsigned64
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"The number of bytes in free memory
+			For a product up to 4GB of total memory, support is optional
+			if this object is supported it contains the same value as oacSysMemoryFree "
+	 ::= { oacSysMemStatistics 5 }
+
+oacSysHCMemoryAllocated OBJECT-TYPE
+		SYNTAX OASysUnsigned64
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"The number of bytes in allocated memory
+			For a product up to 4GB of total memory, support is optional
+			if this object is supported it contains the same value as oacSysMemoryAllocated "
+	 ::= { oacSysMemStatistics 6 }
+
+oacSysHCMemoryTotal OBJECT-TYPE
+		SYNTAX OASysUnsigned64
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Total number of bytes in the system memory partition
+			For a product up to 4GB of total memory, support is optional
+			if this object is supported it contains the same value as oacSysMemoryTotal "
+	 ::= { oacSysMemStatistics 7 }
+
+
+-- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+
+oacSysCpuUsed OBJECT-TYPE
+		SYNTAX Unsigned32
+		MAX-ACCESS read-only
+		STATUS current
+		DESCRIPTION
+			"Used cpu in percent "
+	 ::= { oacSysCpuStatistics 1 }
+
+------------------------------------------------------------------------------
+-->> Cpu usage table for multicore HW
+------------------------------------------------------------------------------
+oacSysCpuUsedCoresCount OBJECT-TYPE
+  SYNTAX  Unsigned32
+  MAX-ACCESS  read-only
+  STATUS  current
+  DESCRIPTION
+    "The number of Cores for the equipment"
+  ::= { oacSysCpuStatistics 2 }
+
+oacSysCpuUsedCoresTable  OBJECT-TYPE
+  SYNTAX  SEQUENCE OF OacSysCpuUsedCoresEntry
+  MAX-ACCESS  not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table for Oneaccess hardware Cores"
+  ::= { oacSysCpuStatistics 3 }
+
+oacSysCpuUsedCoresEntry OBJECT-TYPE
+  SYNTAX OacSysCpuUsedCoresEntry
+  MAX-ACCESS not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table entry for a hardware Core"
+  INDEX { oacSysCpuUsedIndex }
+  ::= { oacSysCpuUsedCoresTable 1 }
+
+OacSysCpuUsedCoresEntry ::=
+  SEQUENCE {
+    oacSysCpuUsedIndex       	Unsigned32,
+    oacSysCpuUsedCoreType	   	OASysCoreType,
+    oacSysCpuUsedValue       	Unsigned32,
+	oacSysCpuUsedOneMinuteValue	Unsigned32
+ }
+
+oacSysCpuUsedIndex OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Core index"
+  ::= { oacSysCpuUsedCoresEntry 1 }
+
+oacSysCpuUsedCoreType OBJECT-TYPE
+  SYNTAX OASysCoreType
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Type of the core"
+  ::= { oacSysCpuUsedCoresEntry 2 }
+
+ oacSysCpuUsedValue OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Used cpu in percent : equivalent for core 0 to the oacSysCpuUsed object. This is the current value"
+  ::= { oacSysCpuUsedCoresEntry 3 }
+
+ oacSysCpuUsedOneMinuteValue OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Cpu load for the last minute period"
+  ::= { oacSysCpuUsedCoresEntry 4 }
+
+
+oacSysLastRebootCause OBJECT-TYPE
+        SYNTAX DisplayString
+        MAX-ACCESS read-only
+        STATUS current
+        DESCRIPTION
+            "To display the cause for the last reboot."
+    ::= { oacExpIMSysStatistics 3 }
+
+-- ----------------------------------------------------------------------------
+-- >> hardware components
+-- ----------------------------------------------------------------------------
+oacExpIMSysHwComponentsCount OBJECT-TYPE
+  SYNTAX  Unsigned32
+  MAX-ACCESS  read-only
+  STATUS  current
+  DESCRIPTION
+    "The number of components for the equipment"
+  ::= { oacExpIMSysHwComponents 1 }
+
+oacExpIMSysHwComponentsTable  OBJECT-TYPE
+  SYNTAX  SEQUENCE OF OacExpIMSysHwComponentsEntry
+  MAX-ACCESS  not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table for Oneaccess hardware components"
+  ::= { oacExpIMSysHwComponents 2 }
+
+oacExpIMSysHwComponentsEntry OBJECT-TYPE
+  SYNTAX OacExpIMSysHwComponentsEntry
+  MAX-ACCESS not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table entry for a hardware component"
+  INDEX { oacExpIMSysHwcIndex }
+  ::= { oacExpIMSysHwComponentsTable 1 }
+
+OacExpIMSysHwComponentsEntry ::=
+  SEQUENCE {
+    oacExpIMSysHwcIndex             Unsigned32,
+    oacExpIMSysHwcClass             OASysHwcClass,
+    oacExpIMSysHwcType	            OASysHwcType,
+    oacExpIMSysHwcDescription       DisplayString,
+    oacExpIMSysHwcSerialNumber      DisplayString,
+    oacExpIMSysHwcManufacturer	    DisplayString,
+    oacExpIMSysHwcManufacturedDate  DisplayString,
+    oacExpIMSysHwcProductName       DisplayString,
+    oacExpIMSysHwcCommercialName    DisplayString
+  }
+
+oacExpIMSysHwcIndex OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Component index"
+  ::= { oacExpIMSysHwComponentsEntry 1 }
+
+oacExpIMSysHwcClass OBJECT-TYPE
+  SYNTAX OASysHwcClass
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Class of the component"
+  ::= { oacExpIMSysHwComponentsEntry 2 }
+
+oacExpIMSysHwcType OBJECT-TYPE
+  SYNTAX OASysHwcType
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Type of the component"
+  ::= { oacExpIMSysHwComponentsEntry 3 }
+
+oacExpIMSysHwcDescription OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Component description, identifies the component"
+  ::= { oacExpIMSysHwComponentsEntry 4 }
+
+oacExpIMSysHwcSerialNumber OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Component's serial number"
+  ::= { oacExpIMSysHwComponentsEntry 5 }
+
+oacExpIMSysHwcManufacturer OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Component manufacturer"
+  ::= { oacExpIMSysHwComponentsEntry 6 }
+
+oacExpIMSysHwcManufacturedDate OBJECT-TYPE
+  SYNTAX DisplayString (SIZE (0..10))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Component's manufacturing date"
+  ::= { oacExpIMSysHwComponentsEntry 7 }
+
+oacExpIMSysHwcProductName OBJECT-TYPE
+  SYNTAX      DisplayString (SIZE (0..255))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+			"The Product name"
+  ::= { oacExpIMSysHwComponentsEntry 8 }
+  
+oacExpIMSysHwcCommercialName  OBJECT-TYPE
+  SYNTAX      DisplayString (SIZE (0..255))
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+			"The Commercial name"
+  ::= { oacExpIMSysHwComponentsEntry 9 }
+
+-- ----------------------------------------------------------------------------
+-- Factory area
+-- ----------------------------------------------------------------------------
+
+oacExpIMSysFactorySupplierID OBJECT-TYPE
+  SYNTAX DisplayString (SIZE (0..14))
+  MAX-ACCESS  read-only
+  STATUS  current
+  DESCRIPTION
+    "Supplier ID. Mapped to Mid field of product-info-area.
+	String is empty if Mid field is not included in
+	product-info-area."
+  ::= { oacExpIMSysFactory 1 }
+
+oacExpIMSysFactoryProductSalesCode OBJECT-TYPE
+  SYNTAX DisplayString (SIZE (0..22))
+  MAX-ACCESS  read-only
+  STATUS  current
+  DESCRIPTION
+    "OA Product Sales Code. Mapped to Mcode field of
+	product-info-area. String is empty if Mcode field
+	is not included in product-info-area."
+  ::= { oacExpIMSysFactory 2 }
+
+oacExpIMSysFactoryHwRevision OBJECT-TYPE
+  SYNTAX DisplayString (SIZE (1..32))
+  MAX-ACCESS  read-only
+  STATUS  current
+  DESCRIPTION
+    "Hardware Revision. Mapped to Mrevision field of
+	product-info-area. String is empty if Mrevision
+	field is not included in product-info-area."
+  ::= { oacExpIMSysFactory 3 }
+
+
+-- ----------------------------------------------------------------------------
+-- system monitor area
+-- ----------------------------------------------------------------------------
+
+-- ---------
+-- PSU Table
+-- ---------
+oacExpIMSysMonPsuTable OBJECT-TYPE
+  SYNTAX  SEQUENCE OF OacExpIMSysMonPsuEntry
+  MAX-ACCESS  not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table for power supply (PSU) monitor components"
+  ::= { oacExpIMSysMonComponents 1 }
+
+oacExpIMSysMonPsuEntry OBJECT-TYPE
+  SYNTAX OacExpIMSysMonPsuEntry
+  MAX-ACCESS not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table entry for power supply monitoring component"
+  INDEX { oacExpIMSysPsuIndex }
+  ::= { oacExpIMSysMonPsuTable 1 }
+
+OacExpIMSysMonPsuEntry ::=
+  SEQUENCE {
+    oacExpIMSysPsuIndex             Unsigned32,
+    oacExpIMSysPsuDescription       DisplayString,
+    oacExpIMSysPsuStatus            OASysPsuStatus,
+    oacExpIMSysPsuSource            OASysPsuSource,
+    oacExpIMSysPsuAlarmCount        Unsigned32,
+    oacExpIMSysPsuLastAlarmDate     DisplayString
+  }
+
+oacExpIMSysPsuIndex OBJECT-TYPE
+  SYNTAX Unsigned32 (1..100)
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Reference number of the PSU; starts by 1"
+  ::= { oacExpIMSysMonPsuEntry 1 }
+
+oacExpIMSysPsuDescription OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Name of the PSU"
+  ::= { oacExpIMSysMonPsuEntry 2 }
+
+oacExpIMSysPsuStatus OBJECT-TYPE
+  SYNTAX OASysPsuStatus
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "PSU Status"
+  ::= { oacExpIMSysMonPsuEntry 3 }
+
+oacExpIMSysPsuSource OBJECT-TYPE
+  SYNTAX OASysPsuSource
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "PSU source"
+  ::= { oacExpIMSysMonPsuEntry 4 }
+
+oacExpIMSysPsuAlarmCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Number of alarms that occured for this PSU."
+  ::= { oacExpIMSysMonPsuEntry 5 }
+
+oacExpIMSysPsuLastAlarmDate OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Timestamp of last alarm that occured on this PSU."
+  ::= { oacExpIMSysMonPsuEntry 6 }
+
+-- ---------
+-- FAN Table
+-- ---------
+
+oacExpIMSysMonFanTable  OBJECT-TYPE
+  SYNTAX  SEQUENCE OF OacExpIMSysMonFanEntry
+  MAX-ACCESS  not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table for fan monitor components"
+  ::= { oacExpIMSysMonComponents 2 }
+
+oacExpIMSysMonFanEntry OBJECT-TYPE
+  SYNTAX OacExpIMSysMonFanEntry
+  MAX-ACCESS not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table entry for fan monitoring component"
+  INDEX { oacExpIMSysFanIndex }
+  ::= { oacExpIMSysMonFanTable 1 }
+
+OacExpIMSysMonFanEntry ::=
+  SEQUENCE {
+    oacExpIMSysFanIndex             Unsigned32,
+    oacExpIMSysFanDescription       DisplayString,
+    oacExpIMSysFanStatus            OASysFanStatus,
+    oacExpIMSysFanAlarmCount        Unsigned32,
+    oacExpIMSysFanLastAlarmDate     DisplayString
+  }
+
+oacExpIMSysFanIndex OBJECT-TYPE
+  SYNTAX Unsigned32 (1..100)
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Reference number of the fan; starts by 1"
+  ::= { oacExpIMSysMonFanEntry 1 }
+
+oacExpIMSysFanDescription OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Name of the fan"
+  ::= { oacExpIMSysMonFanEntry 2 }
+
+oacExpIMSysFanStatus OBJECT-TYPE
+  SYNTAX OASysFanStatus
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Fan Status"
+  ::= { oacExpIMSysMonFanEntry 3 }
+
+
+oacExpIMSysFanAlarmCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Number of alarms that occured for this fan."
+  ::= { oacExpIMSysMonFanEntry 4 }
+
+oacExpIMSysFanLastAlarmDate OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Timestamp of last alarm that occured on this fan."
+  ::= { oacExpIMSysMonFanEntry 5 }
+
+-- ------------------
+-- temp sensor Table
+-- ------------------
+
+oacExpIMSysMonTempSensorTable  OBJECT-TYPE
+  SYNTAX  SEQUENCE OF OacExpIMSysMonTempSensorEntry
+  MAX-ACCESS  not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table for temperature sensor components"
+  ::= { oacExpIMSysMonComponents 3 }
+
+oacExpIMSysMonTempSensorEntry OBJECT-TYPE
+  SYNTAX OacExpIMSysMonTempSensorEntry
+  MAX-ACCESS not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table entry for temperature sensor component"
+  INDEX { oacExpIMSysTempSensorIndex }
+  ::= { oacExpIMSysMonTempSensorTable 1 }
+
+OacExpIMSysMonTempSensorEntry ::=
+  SEQUENCE {
+    oacExpIMSysTempSensorIndex             Unsigned32,
+    oacExpIMSysTempSensorDescription       DisplayString,
+    oacExpIMSysTempSensorValue             Gauge32,
+    oacExpIMSysTempSensorThreshold         Integer32,
+    oacExpIMSysTempSensorAlarmCount        Unsigned32,
+    oacExpIMSysTempSensorLastAlarmDate     DisplayString
+  }
+
+oacExpIMSysTempSensorIndex OBJECT-TYPE
+  SYNTAX Unsigned32 (1..100)
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Reference number of the temperature sensor; starts by 1"
+  ::= { oacExpIMSysMonTempSensorEntry 1 }
+
+oacExpIMSysTempSensorDescription OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Name of the temperature sensor"
+  ::= { oacExpIMSysMonTempSensorEntry 2 }
+
+oacExpIMSysTempSensorValue OBJECT-TYPE
+  SYNTAX     Gauge32
+  UNITS      "degrees Celsius"
+  MAX-ACCESS read-only
+  STATUS     current
+  DESCRIPTION
+    "The current measurement of the temperature sensor."
+  ::= { oacExpIMSysMonTempSensorEntry 3 }
+
+oacExpIMSysTempSensorThreshold OBJECT-TYPE
+  SYNTAX     Integer32
+  UNITS      "degrees Celsius"
+  MAX-ACCESS read-only
+  STATUS     current
+  DESCRIPTION
+    "The highest value that the associated instance of the
+    object oacExpIMSysTempSensorValue may obtain
+    before the operational status of the device is considered
+    critical."
+  ::= { oacExpIMSysMonTempSensorEntry 4 }
+
+oacExpIMSysTempSensorAlarmCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Number of alarms that occured for this temperature sensor."
+  ::= { oacExpIMSysMonTempSensorEntry 5 }
+
+oacExpIMSysTempSensorLastAlarmDate OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Timestamp of last alarm that occured on this
+    temperature sensor."
+  ::= { oacExpIMSysMonTempSensorEntry 6 }
+
+-- --------------------------
+-- Input Voltage sensor Table
+-- --------------------------
+
+oacExpIMSysMonInputVoltageTable  OBJECT-TYPE
+  SYNTAX  SEQUENCE OF OacExpIMSysMonInputVoltageEntry
+  MAX-ACCESS  not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table for input voltage sensor components"
+  ::= { oacExpIMSysMonComponents 5 }
+
+oacExpIMSysMonInputVoltageEntry OBJECT-TYPE
+  SYNTAX OacExpIMSysMonInputVoltageEntry
+  MAX-ACCESS not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table entry for input voltage sensor component"
+  INDEX { oacExpIMSysInputVoltageIndex }
+  ::= { oacExpIMSysMonInputVoltageTable 1 }
+
+OacExpIMSysMonInputVoltageEntry ::=
+  SEQUENCE {
+    oacExpIMSysInputVoltageIndex             Unsigned32,
+    oacExpIMSysInputVoltageDescription       DisplayString,
+    oacExpIMSysInputVoltageValue             Unsigned32,
+    oacExpIMSysInputVoltageThreshold         Unsigned32,
+    oacExpIMSysInputVoltageAlarmCount        Unsigned32,
+    oacExpIMSysInputVoltageLastAlarmDate     DisplayString
+  }
+
+oacExpIMSysInputVoltageIndex OBJECT-TYPE
+  SYNTAX Unsigned32 (1..5)
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Reference number of the input voltage sensor; starts by 1"
+  ::= { oacExpIMSysMonInputVoltageEntry 1 }
+
+oacExpIMSysInputVoltageDescription OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Name of the input voltage sensor"
+  ::= { oacExpIMSysMonInputVoltageEntry 2 }
+
+oacExpIMSysInputVoltageValue OBJECT-TYPE
+  SYNTAX     Unsigned32 (0..14000)
+  UNITS      "miliVolts"
+  MAX-ACCESS read-only
+  STATUS     current
+  DESCRIPTION
+    "The current measurement of the input voltage sensor in mV."
+  ::= { oacExpIMSysMonInputVoltageEntry 3 }
+
+oacExpIMSysInputVoltageThreshold OBJECT-TYPE
+  SYNTAX     Unsigned32 (0..14000)
+  UNITS      "miliVolts"
+  MAX-ACCESS read-write
+  STATUS     current
+  DESCRIPTION
+    "The lowest value (in mV) that the associated instance of the
+    object oacExpIMSysInputVoltageValue may obtain before the 
+    operational status of the device is considered critical."
+  ::= { oacExpIMSysMonInputVoltageEntry 4 }
+
+oacExpIMSysInputVoltageAlarmCount OBJECT-TYPE
+  SYNTAX Unsigned32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Number of alarms that occured for this input voltage sensor."
+  ::= { oacExpIMSysMonInputVoltageEntry 5 }
+
+oacExpIMSysInputVoltageLastAlarmDate OBJECT-TYPE
+  SYNTAX        DisplayString
+  MAX-ACCESS    read-only
+  STATUS        current
+  DESCRIPTION
+    "Timestamp of last alarm that occured on this
+    input voltage sensor."
+  ::= { oacExpIMSysMonInputVoltageEntry 6 }
+
+-- --------------------
+-- other monitor items
+-- --------------------
+
+oacExpIMSysHwPowerRedundancy OBJECT-TYPE
+  SYNTAX      INTEGER { enabled(1), disabled(2) }
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION
+    "The power redundancy mode can be enabled or disabled,
+    because the behavior of the Status LED and the power
+    redundancy events is different depending on that configuration.
+
+    By default, this object should have the value disabled(2)."
+  ::= { oacExpIMSysMonComponents 4 }
+
+-- --------------------
+-- IO contact items
+-- --------------------
+
+oacExpIMSysIOContactsInfo OBJECT IDENTIFIER ::= { oacExpIMSystem 4 }
+oacExpIMSysIOContacts     OBJECT IDENTIFIER ::= { oacExpIMSysIOContactsInfo 1 }
+
+oacExpIMSysIOContactsTraps      OBJECT IDENTIFIER ::= { oacExpIMSystem 5 }
+oacExpIMSysIOContactsTrapPrefix OBJECT IDENTIFIER ::= { oacExpIMSysIOContactsTraps 0 }
+
+oacExpIMSysIOContactTrap NOTIFICATION-TYPE
+  OBJECTS
+  {
+    oacExpIMSysIOContactIndex,
+    oacExpIMSysIOContactValue,
+    oacExpIMSysIOContactDescription
+  }
+  STATUS             current
+  DESCRIPTION
+          "this notification indicate that the digital Inputs detect if a voltage is above/below a specific threshold"
+  ::= { oacExpIMSysIOContactsTrapPrefix 1 }  
+
+
+oacExpIMSysIOContactTable  OBJECT-TYPE
+  SYNTAX  SEQUENCE OF OacExpIMSysIOContactEntry
+  MAX-ACCESS  not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table for IO contact components."
+  ::= { oacExpIMSysIOContacts 1 }
+
+oacExpIMSysIOContactEntry OBJECT-TYPE
+  SYNTAX OacExpIMSysIOContactEntry
+  MAX-ACCESS not-accessible
+  STATUS  current
+  DESCRIPTION
+    "Table entry for IO contact component."
+  INDEX { oacExpIMSysIOContactIndex }
+  ::= { oacExpIMSysIOContactTable 1 }
+
+  OacExpIMSysIOContactEntry ::=
+    SEQUENCE 
+    {
+      oacExpIMSysIOContactIndex             Unsigned32,
+      oacExpIMSysIOContactConfig            OASysIOContactConfig,
+      oacExpIMSysIOContactValue             OASysIOContactValue,
+      oacExpIMSysIOContactDescription       DisplayString
+    }
+  
+  oacExpIMSysIOContactIndex OBJECT-TYPE
+    SYNTAX Unsigned32 (1..100)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+      "Reference number of the IO conact; starts by 1"
+    ::= { oacExpIMSysIOContactEntry 1 }
+  
+  oacExpIMSysIOContactConfig OBJECT-TYPE
+    SYNTAX OASysIOContactConfig
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+      "Current config for the IO contact"
+    ::= { oacExpIMSysIOContactEntry 2 }
+
+  oacExpIMSysIOContactValue OBJECT-TYPE
+    SYNTAX OASysIOContactValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+      "Current value of the IO contact"
+    ::= { oacExpIMSysIOContactEntry 3 }
+
+  oacExpIMSysIOContactDescription OBJECT-TYPE
+    SYNTAX DisplayString (SIZE (0..127))
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION
+      "Description of the IO contact"
+    ::= { oacExpIMSysIOContactEntry 4 }
+
+
+--
+-- Reboot system
+-- 1.3.6.1.4.1.13191.10.3.3.6.1
+oacExpIMSysRebootInfo  OBJECT IDENTIFIER ::= { oacExpIMSystem 6 }
+  oacExpIMSysReboot    OBJECT-TYPE
+  SYNTAX               OASysReboot
+  MAX-ACCESS           read-write
+  STATUS               current
+  DESCRIPTION          "This object is for triggering the reboot of the device.
+                        The integer value '1' should be set to trigger the reboot.
+                        Reboot starts after 5 secs without saving the running config."
+  ::= { oacExpIMSysRebootInfo 1 }
+
+
+
+  
+-- --------------------
+-- Monitor Traps
+-- --------------------
+
+oacExpIMSysMonSuppStatusChangeNotif NOTIFICATION-TYPE
+    OBJECTS {
+            oacExpIMSysPsuIndex,
+            oacExpIMSysPsuDescription,
+            oacExpIMSysPsuStatus
+            }
+    STATUS  current
+    DESCRIPTION
+            "A oacExpIMSysMonSuppStatusChangeNotif is sent if there
+             is change in the state of a PSU being monitored
+             by oacExpIMSysPsuStatus."
+    ::= { oacExpIMSysMonNotifications 1 }
+
+oacExpIMSysMonFanStatusChangeNotif NOTIFICATION-TYPE
+    OBJECTS {
+            oacExpIMSysFanIndex,
+            oacExpIMSysFanDescription,
+            oacExpIMSysFanStatus
+            }
+    STATUS  current
+    DESCRIPTION
+            "A oacExpIMSysMonFanStatusChangeNotif is sent if there
+             is change in the state of a fan being monitored
+             by oacExpIMSysFanStatus."
+    ::= { oacExpIMSysMonNotifications 2 }
+
+oacExpIMSysMonTempStatusChangeNotif NOTIFICATION-TYPE
+    OBJECTS {
+            oacExpIMSysTempSensorIndex,
+            oacExpIMSysTempSensorDescription,
+            oacExpIMSysTempSensorValue
+            }
+    STATUS  current
+    DESCRIPTION
+            "A oacExpIMSysMonTempStatusChangeNotif is sent if the
+             value of oacExpIMSysTempSensorValue crosses the
+             oacExpIMSysTempSensorThreshold of a temperature 
+             sensor."
+    ::= { oacExpIMSysMonNotifications 3 }
+
+oacExpIMSysMonDyingGaspNotif NOTIFICATION-TYPE
+    STATUS  current
+    DESCRIPTION
+            "A oacExpIMSysMonDyingGaspNotif is sent if the
+             unit is about to fail due to loss of power (dying gasp)."
+    ::= { oacExpIMSysMonNotifications 4 }
+
+END
+--

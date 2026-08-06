@@ -1,0 +1,394 @@
+--------------------------------------------------------------------
+--          *****************************
+--          *                           *
+--          *         ONEOS MIB         *
+--          *                           *
+--          *****************************
+--
+--          ONEOS_MIB_STD_V05.2.R001_E001
+--
+--          Creation date : 2007-03-08
+--
+--------------------------------------------------------------------
+
+ONEACCESS-CONFIGMGMT-MIB DEFINITIONS ::= BEGIN
+
+--------------------------------------------------------------------
+-- Imports
+--------------------------------------------------------------------
+
+IMPORTS
+MODULE-IDENTITY, OBJECT-TYPE, Integer32, IpAddress, NOTIFICATION-TYPE
+FROM SNMPv2-SMI
+--
+Ipv6Address
+FROM IPV6-TC
+--
+DateAndTime, TEXTUAL-CONVENTION
+FROM SNMPv2-TC
+--
+MODULE-COMPLIANCE, OBJECT-GROUP
+FROM SNMPv2-CONF
+--
+DisplayString
+FROM SNMPv2-TC 
+
+SnmpAdminString
+FROM SNMP-FRAMEWORK-MIB
+--
+oacMIBModules, oacExpIMManagement, oacRequirements
+FROM ONEACCESS-GLOBAL-REG;
+--
+--------------------------------------------------------------------
+-- Module Entity
+--------------------------------------------------------------------
+
+oacConfigMgmtMIBModule MODULE-IDENTITY
+    LAST-UPDATED "202411050000Z"
+    ORGANIZATION "OneAccess"
+    CONTACT-INFO "support@ekinops.com"
+
+    DESCRIPTION
+    "Added MIB objects for supporting SCP file transfer and contact updated."
+    REVISION        "202411050000Z"
+
+    DESCRIPTION
+    "Contact updated"
+    REVISION        "201110270000Z"
+
+    DESCRIPTION
+    "Added MODULE-COMPLIANCE AND OBJECT GROUP,
+    fixed some minor corrections."
+    REVISION    "201007081000Z"
+
+    DESCRIPTION
+    "This MIB module describes a MIB for keeping track of changes
+    on equipment's configuration."
+    ::= { oacMIBModules 2001 }
+
+    --------------------------------------------------------------------
+    -- Textual Conventions
+    --------------------------------------------------------------------
+
+    --
+
+    --------------------------------------------------------------------
+    -- Objects Definitions
+    --------------------------------------------------------------------
+
+    oacExpIMConfigMgmt OBJECT IDENTIFIER ::= { oacExpIMManagement 6 }
+    oacConfigMgmtObjects OBJECT IDENTIFIER ::= { oacExpIMConfigMgmt 1 }
+    oacCMHistory OBJECT IDENTIFIER ::= { oacConfigMgmtObjects 1 }
+    oacCMCopy OBJECT IDENTIFIER ::= { oacConfigMgmtObjects 2 }
+    oacConfigMgmtNotifications OBJECT IDENTIFIER ::= { oacConfigMgmtObjects 3 }
+
+    --------------------------------------------------------------------
+    -- Configuration Management Objects Definition
+    --------------------------------------------------------------------
+
+    -- Configuration History
+
+    oacCMHistoryRunningLastChanged OBJECT-TYPE
+    SYNTAX          DateAndTime
+    MAX-ACCESS  read-only
+    STATUS          current
+    DESCRIPTION "The time when the running configuration
+    was last changed."
+    ::= { oacCMHistory 1 }
+
+    oacCMHistoryRunningLastSaved OBJECT-TYPE
+    SYNTAX          DateAndTime
+    MAX-ACCESS  read-only
+    STATUS          current
+    DESCRIPTION "The time when the running configuration
+    was last saved (written)."
+    ::= { oacCMHistory 2 }
+
+    oacCMHistoryStartupLastChanged OBJECT-TYPE
+    SYNTAX          DateAndTime
+    MAX-ACCESS  read-only
+    STATUS          current
+    DESCRIPTION "The time when the startup configuration
+    was last written to."
+    ::= { oacCMHistory 3 }
+
+    oacCMCopyIndex OBJECT-TYPE
+    SYNTAX          IpAddress
+    MAX-ACCESS  not-accessible
+    STATUS          current
+    DESCRIPTION "IP address used for configuration copy."
+    ::= { oacCMCopy 1 }
+
+    oacCMCopyTftpRunTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacCMCopyTftpRunEntry
+    MAX-ACCESS         not-accessible
+    STATUS             current
+    DESCRIPTION        "This table is to perform TFTP copy of running configuration from the server."
+    ::= { oacCMCopy 2 }
+
+    oacCMCopyTftpRunEntry OBJECT-TYPE
+    SYNTAX         OacCMCopyTftpRunEntry
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION    "List of objects defining a conceptual copy tftp entry."
+    INDEX           { oacCMCopyIndex }
+    ::= { oacCMCopyTftpRunTable 1 }
+
+    OacCMCopyTftpRunEntry ::= SEQUENCE {
+        oacCMCopyTftpRun             DisplayString
+    }
+
+    oacCMCopyTftpRun OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      read-write
+    STATUS          current
+    DESCRIPTION     "Name of the configuration file on the server.
+                     This variable is in effect a write-only variable.
+                     Attempts to read this variable will result in a 
+                     no-such-object response."
+    ::= { oacCMCopyTftpRunEntry 1 }
+
+    oacCMCopyRunTftpTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacCMCopyRunTftpEntry
+    MAX-ACCESS         not-accessible
+    STATUS             current
+    DESCRIPTION        "This table is to perform TFTP copy of running configuration to the server."
+    ::= { oacCMCopy 3 }
+
+    oacCMCopyRunTftpEntry OBJECT-TYPE
+    SYNTAX         OacCMCopyRunTftpEntry
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION    "List of objects defining a conceptual copy tftp entry."
+    INDEX           { oacCMCopyIndex }
+    ::= { oacCMCopyRunTftpTable 1 }
+
+    OacCMCopyRunTftpEntry ::= SEQUENCE {
+       oacCMCopyRunTftp             DisplayString
+    }
+    oacCMCopyRunTftp OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      read-write
+    STATUS          current
+    DESCRIPTION     "Name of the configuration file on the server.
+                     This variable is in effect a write-only variable.
+                     Attempts to read this variable will result in a 
+                     no-such-object response."
+    ::= { oacCMCopyRunTftpEntry 1 }
+
+
+    oacCMCopyServAddrType OBJECT-TYPE
+    SYNTAX      INTEGER
+    { 
+       ipv4(1),
+       ipv6(2),
+       hostname(3)
+    }
+    MAX-ACCESS      read-write
+    STATUS          current
+    DESCRIPTION     "Type of address for oacCMCopyServAddr 
+                     IPv4 address (1), IPv6 address (2) or hostname (3)"
+    ::= { oacCMCopy 11 }
+    
+    oacCMCopyServAddr OBJECT-TYPE
+    SYNTAX         SnmpAdminString
+    MAX-ACCESS  not-accessible
+    STATUS          current
+    DESCRIPTION     "IP Address of the server where the file is stored."
+    ::= { oacCMCopy 12 }
+    
+    oacCMCopyServRunTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacCMCopyServRunEntry
+    MAX-ACCESS         not-accessible
+    STATUS             current
+    DESCRIPTION        "Table to facilitate the transfer and application of configuration file from server to 
+                        device."
+    ::= { oacCMCopy 13 }
+
+    oacCMCopyServRunEntry OBJECT-TYPE
+    SYNTAX         OacCMCopyServRunEntry
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION    "List of objects defining a conceptual copy from server entry."
+    INDEX           { oacCMCopyServAddr }
+    ::= { oacCMCopyServRunTable 1 }
+
+    OacCMCopyServRunEntry ::= SEQUENCE {
+        oacCMCopyServRunFile    DisplayString,
+        oacCMCopyServRunStatus  INTEGER  
+    }
+
+    oacCMCopyServRunFile OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      read-write
+    STATUS          current
+    DESCRIPTION "Path and File name to transfer; setting this parameter
+    triggers the configuration file transfer and applies the configuration on device. 
+    Attempts to read this variable will result in a no-such-object response"
+    ::= { oacCMCopyServRunEntry 1 }
+
+    oacCMCopyServRunStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+    { 
+       notStarted(1),
+       active(2),
+       successful(3),
+       serverNotReachable(4),
+       connectionFailure(5),
+       failed(6)
+    }
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION     "Status of operation of oacCMCopyServRunFile 
+                     notStarted(1), active(2), successful(3), serverNotReachable(4) 
+                     connectionFailure(5) and failed(6)"
+    ::= { oacCMCopyServRunEntry 2 }
+
+    oacCMCopyProtocol OBJECT-TYPE
+    SYNTAX            INTEGER
+    {
+       scp(1)
+    }
+    MAX-ACCESS        read-write
+    STATUS            current
+    DESCRIPTION       "Protocol used for file transfer"
+    ::= { oacCMCopy 4 }
+
+    oacCMCopyUsername OBJECT-TYPE
+    SYNTAX            DisplayString
+    MAX-ACCESS        read-write
+    STATUS            current
+    DESCRIPTION       "Username for the authentication with the server"
+    ::= { oacCMCopy 5 }
+
+    oacCMCopyPassword OBJECT-TYPE
+    SYNTAX            DisplayString
+    MAX-ACCESS        read-write
+    STATUS            current
+    DESCRIPTION       "Password for the authentication with the server"
+    ::= { oacCMCopy 6 }
+
+    oacCMCopySrcIntf  OBJECT-TYPE
+    SYNTAX            DisplayString
+    MAX-ACCESS        read-write
+    STATUS            current
+    DESCRIPTION       "Source Interface name of the device to be chosen for 
+                       the file transfer. When both this object and oacCMCopySrcIPv4
+                       are set, oacCMCopySrcIntf will have more priority"
+    ::= { oacCMCopy 7 }
+
+    oacCMCopySrcIPv4  OBJECT-TYPE
+    SYNTAX            IpAddress
+    MAX-ACCESS        read-write
+    STATUS            current
+    DESCRIPTION       "Source IP address of the device to be chosen for 
+                       the file transfer"
+    ::= { oacCMCopy 8 }
+
+    oacCMCopyVrfName  OBJECT-TYPE
+    SYNTAX            DisplayString
+    MAX-ACCESS        read-write
+    STATUS            current
+    DESCRIPTION       "Name of the VRF in the device to be chosen 
+                       for the file transfer"
+    ::= { oacCMCopy 9 }
+
+    oacCMCopySrcIPv6  OBJECT-TYPE
+    SYNTAX            Ipv6Address
+    MAX-ACCESS        read-write
+    STATUS            current
+    DESCRIPTION       "Source IPv6 address of the device to be chosen for 
+                       the file transfer"
+    ::= { oacCMCopy 10 }
+
+    oacCMCopyRunServTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacCMCopyRunServEntry
+    MAX-ACCESS         not-accessible
+    STATUS             current
+    DESCRIPTION        "Table to facilitate the transfer of configuration file 
+                        from device to server."
+    ::= { oacCMCopy 14 }
+
+    oacCMCopyRunServEntry OBJECT-TYPE
+    SYNTAX         OacCMCopyRunServEntry
+    MAX-ACCESS     not-accessible
+    STATUS         current
+    DESCRIPTION    "List of objects defining a conceptual copy to server entry."
+    INDEX           { oacCMCopyServAddr }
+    ::= { oacCMCopyRunServTable 1 }
+
+    OacCMCopyRunServEntry ::= SEQUENCE {
+       oacCMCopyRunServFile   DisplayString,
+       oacCMCopyRunServStatus INTEGER
+    }
+
+    oacCMCopyRunServFile OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      read-write
+    STATUS          current
+    DESCRIPTION     "Name of the file on the server where the configuration script 
+                     will be stored.This variable is in effect a write-only variable.
+                     Attempts to read this variable will result 
+                     in a no-such-object response."
+   ::= { oacCMCopyRunServEntry 1 }
+
+    oacCMCopyRunServStatus OBJECT-TYPE
+    SYNTAX      INTEGER
+    {
+       notStarted(1),
+       active(2),
+       successful(3),
+       serverNotReachable(4),
+       connectionFailure(5),
+       failed(6)
+    }
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION     "Status of operation of oacCMCopyRunServFile
+                     notStarted(1), active(2), successful(3), serverNotReachable(4)
+                     connectionFailure(5) and failed(6)"
+    ::= { oacCMCopyRunServEntry 2 }
+
+
+    oacCMRunningConfigSaved NOTIFICATION-TYPE
+    STATUS       current
+    DESCRIPTION
+    "The running configuration has been saved."
+    ::= { oacConfigMgmtNotifications 1 }
+
+    oacCMRunningConfigModified NOTIFICATION-TYPE
+    STATUS       current
+    DESCRIPTION
+    "The running configuration has been modified."
+    ::= { oacConfigMgmtNotifications 2 }
+
+--------------------------------------------------------------------
+-- Conformance Definitions
+--------------------------------------------------------------------
+
+oacCMConformance OBJECT IDENTIFIER ::= { oacRequirements 2001 }
+oacCMGroups      OBJECT IDENTIFIER ::= { oacCMConformance 1 }
+oacCMCompliances OBJECT IDENTIFIER ::= { oacCMConformance 2 }
+
+oacCMCompliance MODULE-COMPLIANCE
+STATUS  current
+DESCRIPTION
+"The compliance statement for agents that support the
+ONEACCESS-CONFIGMGMT-MIB."
+MODULE -- this module
+MANDATORY-GROUPS { oacCMGeneralGroup }
+::= { oacCMCompliances 1 }
+
+oacCMGeneralGroup OBJECT-GROUP
+OBJECTS {
+    oacCMHistoryRunningLastChanged,
+        oacCMHistoryRunningLastSaved,
+        oacCMHistoryStartupLastChanged
+}
+STATUS  current
+DESCRIPTION
+"This group is mandatory for Configuration Management entity."
+::= { oacCMGroups 1 }
+
+END
+

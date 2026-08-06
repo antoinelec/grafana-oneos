@@ -1,0 +1,511 @@
+
+ONEACCESS-ALARM-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE,
+    Integer32, Unsigned32, Counter32, Counter64,
+    Gauge32, IpAddress, NOTIFICATION-TYPE
+        FROM SNMPv2-SMI
+    oacAlarmMIBRoot 
+        FROM ONEACCESS-GLOBAL-REG
+    TEXTUAL-CONVENTION, RowStatus, DateAndTime,
+    TruthValue
+        FROM SNMPv2-TC
+;
+
+oacAlarmMIB MODULE-IDENTITY
+    LAST-UPDATED "202410080000Z"
+    ORGANIZATION "@ORGANIZATION"
+    CONTACT-INFO "support@ekinops.com"
+    DESCRIPTION "MIB for displaying and configuring Alarm in OneOs"
+    REVISION "202410080000Z"
+    DESCRIPTION "MIB for displaying and configuring Alarm in OneOs"
+    ::= { oacAlarmMIBRoot 1 }
+
+String ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "1t"
+    STATUS      current
+    DESCRIPTION "xs:string"
+    SYNTAX      OCTET STRING
+
+Alarm-qualifier-t ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "1t"
+    STATUS      current
+    DESCRIPTION "Alarm Qualifier"
+    SYNTAX      OCTET STRING
+
+Alarm-resource-t ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "1t"
+    STATUS      current
+    DESCRIPTION "Alarm Resource"
+    SYNTAX      OCTET STRING
+
+Alarm-type-t ::= TEXTUAL-CONVENTION
+    DISPLAY-HINT "1t"
+    STATUS      current
+    DESCRIPTION "Alarm Type"
+    SYNTAX      OCTET STRING
+
+Alarm-admin-status-t ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION "Alarm Adminstatus"
+    SYNTAX      INTEGER {enabled(1),disabled(2)}
+
+Alarm-oper-status-t ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION "Alarm Operational Status"
+    SYNTAX      INTEGER {oN(0),oFF(1)}
+
+Alarm-severity-t ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION "Alarm Severity"
+    SYNTAX      INTEGER {indeterminate(2),warning(3),minor(4),major(5),critical(6)}
+
+-- Alarm
+-- tagpath /alarm
+alarms OBJECT IDENTIFIER ::= { oacAlarmMIB 1 }
+
+-- Alarm Summary
+-- tagpath /alarm/summary
+alarmSummary OBJECT IDENTIFIER ::= { alarms 1 }
+
+-- tagpath /alarm/summary/enabled
+alarmSummary-enabled OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of enabled alarms"
+    ::= { alarmSummary 1 }
+
+-- tagpath /alarm/summary/disabled
+alarmSummary-disabled OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of disabled alarms"
+    ::= { alarmSummary 2 }
+
+-- tagpath /alarm/summary/raised
+alarmSummary-raised OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of alarms currently in raised status"
+    ::= { alarmSummary 3 }
+
+-- tagpath /alarm/summary/cleared
+alarmsummary-cleared OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of alarms currently in cleared status"
+    ::= { alarmSummary 4 }
+
+-- tagpath /alarm/summary/status-changes
+alarmsummary-status-changes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total number of alarm status changes (includes both existing and deleted instances, if any)"
+    ::= { alarmSummary 5 }
+
+-- tagpath /alarm/summary/last-changed-time
+alarmSummary-last-changed-time OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Timestamp for last status change of Alarms"
+    ::= { alarmSummary 6 }
+
+-- tagpath /alarm/summary/last-sequence-number
+alarmSummary-last-sequence-number OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Sequence number of the most recent alarm status change"
+    ::= { alarmSummary 7 }
+
+-- tagpath /alarm/inventory
+alarmInventoryTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF AlarmInventoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm Inventory"
+    ::= { alarms 2 }
+
+-- tagpath /alarm/inventory
+alarmInventoryEntry OBJECT-TYPE
+    SYNTAX      AlarmInventoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm Inventory Entry"
+    INDEX { alarmInventoryAlarm-type, alarmInventoryAlarm-qualifier }
+        ::= { alarmInventoryTable 1 }
+
+AlarmInventoryEntry ::=
+    SEQUENCE {
+        alarmInventoryAlarm-type Alarm-type-t,
+        alarmInventoryAlarm-qualifier Alarm-qualifier-t,
+        alarmInventoryAlarm-adminstatus Alarm-admin-status-t,
+        alarmInventoryAlarm-severity Alarm-severity-t,
+        alarmInventoryAlarm-will-clear TruthValue,
+        alarmInventoryAlarm-description String
+    }
+
+-- tagpath /alarm/inventory/alarm-type
+alarmInventoryAlarm-type OBJECT-TYPE
+    SYNTAX      Alarm-type-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm type"
+    ::= { alarmInventoryEntry 1 }
+
+-- tagpath /alarm/inventory/alarm-qualifier
+alarmInventoryAlarm-qualifier OBJECT-TYPE
+    SYNTAX      Alarm-qualifier-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm qualifier"
+    ::= { alarmInventoryEntry 2 }
+
+-- tagpath /alarm/inventory/admin-status
+alarmInventoryAlarm-adminstatus OBJECT-TYPE
+    SYNTAX      Alarm-admin-status-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm admin status"
+    ::= { alarmInventoryEntry 3 }
+
+-- tagpath /alarm/inventory/alarm-severity
+alarmInventoryAlarm-severity OBJECT-TYPE
+    SYNTAX      Alarm-severity-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm severity"
+    ::= { alarmInventoryEntry 4 }
+
+-- tagpath /alarm/inventory/will-clear
+alarmInventoryAlarm-will-clear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Indicates whether Alarm will get cleared"
+    ::= { alarmInventoryEntry 5 }
+
+-- tagpath /alarm/inventory/alarm-description
+alarmInventoryAlarm-description OBJECT-TYPE
+    SYNTAX      String
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm description"
+    ::= { alarmInventoryEntry 6 }
+
+-- tagpath /alarm/list
+alarmListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF AlarmListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm list"
+    ::= { alarms 3 }
+
+-- tagpath /alarm/list
+alarmListEntry OBJECT-TYPE
+    SYNTAX      AlarmListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm list entry"
+    INDEX { alarmListAlarm-type, alarmListAlarm-qualifier, alarmListAlarm-resource }
+        ::= { alarmListTable 1 }
+
+AlarmListEntry ::=
+    SEQUENCE {
+        alarmListAlarm-type Alarm-type-t,
+        alarmListAlarm-qualifier Alarm-qualifier-t,
+        alarmListAlarm-resource Alarm-resource-t,
+        alarmListAlarm-adminstatus Alarm-admin-status-t,
+        alarmListAlarm-severity Alarm-severity-t,
+        alarmListAlarm-resource-CLI Alarm-resource-t,
+        alarmListAlarm-resource-SNMP Alarm-resource-t
+    }
+
+-- tagpath /alarm/list/alarm-type
+alarmListAlarm-type OBJECT-TYPE
+    SYNTAX      Alarm-type-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm type"
+    ::= { alarmListEntry 1 }
+
+-- tagpath /alarm/list/alarm-qualifier
+alarmListAlarm-qualifier OBJECT-TYPE
+    SYNTAX      Alarm-qualifier-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm qualifier"
+    ::= { alarmListEntry 2 }
+
+-- tagpath /alarm/list/alarm-resource-XPATH
+alarmListAlarm-resource OBJECT-TYPE
+    SYNTAX      Alarm-resource-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm Resource XPATH"
+    ::= { alarmListEntry 3 }
+
+-- tagpath /alarm/list/admin-status
+alarmListAlarm-adminstatus OBJECT-TYPE
+    SYNTAX      Alarm-admin-status-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm admin status"
+    ::= { alarmListEntry 4 }
+
+-- tagpath /alarm/list/alarm-severity
+alarmListAlarm-severity OBJECT-TYPE
+    SYNTAX      Alarm-severity-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm severity"
+    ::= { alarmListEntry 5 }
+
+-- tagpath /alarm/list/alarm-resource-CLI
+alarmListAlarm-resource-CLI OBJECT-TYPE
+    SYNTAX      Alarm-resource-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm resource CLI"
+    ::= { alarmListEntry 6 }
+
+-- tagpath /alarm/list/alarm-resource-SNMP
+alarmListAlarm-resource-SNMP OBJECT-TYPE
+    SYNTAX      Alarm-resource-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm resource SNMP"
+    ::= { alarmListEntry 7 }
+
+-- tagpath /alarm/status
+alarmStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF AlarmStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm status"
+    ::= { alarms 4 }
+
+-- tagpath /alarm/status
+alarmStatusEntry OBJECT-TYPE
+    SYNTAX      AlarmStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm status entry"
+    INDEX { alarmStatusAlarm-type, alarmStatusAlarm-qualifier, alarmStatusAlarm-resource }
+        ::= { alarmStatusTable 1 }
+
+AlarmStatusEntry ::=
+    SEQUENCE {
+        alarmStatusAlarm-type Alarm-type-t,
+        alarmStatusAlarm-qualifier Alarm-qualifier-t,
+        alarmStatusAlarm-resource Alarm-resource-t,
+        alarmStatusAlarm-operstatus Alarm-oper-status-t,
+        alarmStatusAlarm-severity Alarm-severity-t,
+        alarmStatusAlarm-resource-CLI Alarm-resource-t
+    }
+
+-- tagpath /alarm/status/alarm-type
+alarmStatusAlarm-type OBJECT-TYPE
+    SYNTAX      Alarm-type-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm type"
+    ::= { alarmStatusEntry 1 }
+
+-- tagpath /alarm/status/alarm-qualifier
+alarmStatusAlarm-qualifier OBJECT-TYPE
+    SYNTAX      Alarm-qualifier-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm qualifier"
+    ::= { alarmStatusEntry 2 }
+
+-- tagpath /alarm/status/alarm-resource-XPATH
+alarmStatusAlarm-resource OBJECT-TYPE
+    SYNTAX      Alarm-resource-t
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm resource XPATH"
+    ::= { alarmStatusEntry 3 }
+
+-- tagpath /alarm/status/oper-status
+alarmStatusAlarm-operstatus OBJECT-TYPE
+    SYNTAX      Alarm-oper-status-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm Operational status"
+    ::= { alarmStatusEntry 4 }
+
+-- tagpath /alarm/status/alarm-severity
+alarmStatusAlarm-severity OBJECT-TYPE
+    SYNTAX      Alarm-severity-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm severity"
+    ::= { alarmStatusEntry 5 }
+
+-- tagpath /alarm/status/alarm-resource-CLI
+alarmStatusAlarm-resource-CLI OBJECT-TYPE
+    SYNTAX      Alarm-resource-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm resource CLI"
+    ::= { alarmStatusEntry 6 }
+
+-- tagpath /alarm/history
+alarmHistoryTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF AlarmHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm History"
+    ::= { alarms 5 }
+
+-- tagpath /alarm/history
+alarmHistoryEntry OBJECT-TYPE
+    SYNTAX      AlarmHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm history entry"
+    INDEX { alarmHistoryAlarm-seqnum }
+        ::= { alarmHistoryTable 1 }
+
+AlarmHistoryEntry ::=
+    SEQUENCE {
+        alarmHistoryAlarm-seqnum Counter64,
+        alarmHistoryAlarm-type Alarm-type-t,
+        alarmHistoryAlarm-qualifier Alarm-qualifier-t,
+        alarmHistoryAlarm-resource Alarm-resource-t,
+        alarmHistoryAlarm-resource-CLI Alarm-resource-t,
+        alarmHistoryAlarm-state Alarm-oper-status-t,
+        alarmHistoryAlarm-severity Alarm-severity-t,
+        alarmHistoryAlarm-time DateAndTime,
+        alarmHistoryAlarm-text String
+    }
+
+-- tagpath /alarm/history/alarm-seqnum
+alarmHistoryAlarm-seqnum OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "Alarm sequence number"
+    ::= { alarmHistoryEntry 1 }
+
+-- tagpath /alarm/history/alarm-type
+alarmHistoryAlarm-type OBJECT-TYPE
+    SYNTAX      Alarm-type-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm type"
+    ::= { alarmHistoryEntry 2 }
+
+-- tagpath /alarm/history/alarm-qualifier
+alarmHistoryAlarm-qualifier OBJECT-TYPE
+    SYNTAX      Alarm-qualifier-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm qualifier"
+    ::= { alarmHistoryEntry 3 }
+
+-- tagpath /alarm/history/alarm-resource-XPATH
+alarmHistoryAlarm-resource OBJECT-TYPE
+    SYNTAX      Alarm-resource-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm resource XPATH"
+    ::= { alarmHistoryEntry 4 }
+
+-- tagpath /alarm/history/alarm-resource-CLI
+alarmHistoryAlarm-resource-CLI OBJECT-TYPE
+    SYNTAX      Alarm-resource-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm resource CLI"
+    ::= { alarmHistoryEntry 5 }
+
+-- tagpath /alarm/history/alarm-state
+alarmHistoryAlarm-state OBJECT-TYPE
+    SYNTAX      Alarm-oper-status-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm state"
+    ::= { alarmHistoryEntry 6 }
+
+-- tagpath /alarm/history/alarm-severity
+alarmHistoryAlarm-severity OBJECT-TYPE
+    SYNTAX      Alarm-severity-t
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm severity"
+    ::= { alarmHistoryEntry 7 }
+
+-- tagpath /alarm/history/alarm-time
+alarmHistoryAlarm-time OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm timestamp"
+    ::= { alarmHistoryEntry 8 }
+
+-- tagpath /alarm/history/alarm-text
+alarmHistoryAlarm-text OBJECT-TYPE
+    SYNTAX      String
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Alarm text"
+    ::= { alarmHistoryEntry 9 }
+
+alarmStatusChangeNotification NOTIFICATION-TYPE
+    OBJECTS {
+        alarmHistoryAlarm-resource,
+        alarmHistoryAlarm-type,
+        alarmHistoryAlarm-qualifier,
+        alarmHistoryAlarm-seqnum,
+        alarmHistoryAlarm-time,
+        alarmHistoryAlarm-state,
+        alarmHistoryAlarm-severity,
+        alarmHistoryAlarm-text
+    }
+    STATUS  current
+    DESCRIPTION
+            "A alarmStatusChangeNotification alarm is sent when a
+             configure/monitored alarm status changes."
+    ::= { alarms  7 }
+
+alarmInventoryNotification NOTIFICATION-TYPE
+    OBJECTS {
+        alarmInventoryAlarm-type,
+        alarmInventoryAlarm-qualifier,
+        alarmInventoryAlarm-adminstatus,
+        alarmInventoryAlarm-severity,
+        alarmInventoryAlarm-will-clear,
+        alarmInventoryAlarm-description
+    }
+    STATUS  current
+    DESCRIPTION
+            "A alarmInventoryAddNotification is sent when
+            a inventory changes"
+    ::= { alarms  8 }
+
+-- Alarm Configuration
+-- tagpath /system/alarm
+alarmConfig OBJECT IDENTIFIER ::= { oacAlarmMIB 2 }
+
+-- Alarm history
+-- tagpath /system/alarm/history
+alarmConfigHistory OBJECT IDENTIFIER ::= { alarmConfig 1 }
+
+-- tagpath /system/alarm/history/max-size
+alarmConfigHistoryMax-size OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION "Alarm history size"
+    ::= { alarmConfigHistory 1 }
+
+END

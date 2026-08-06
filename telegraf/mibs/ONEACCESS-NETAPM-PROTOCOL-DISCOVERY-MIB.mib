@@ -1,0 +1,399 @@
+ONEACCESS-NETAPM-PROTOCOL-DISCOVERY-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+        MODULE-IDENTITY,
+	OBJECT-TYPE,
+       	NOTIFICATION-TYPE,	
+       	Unsigned32,
+       	Counter32,
+       	Counter64,
+       	TimeTicks
+       	        FROM SNMPv2-SMI
+	oacMIBModules
+                FROM ONEACCESS-GLOBAL-REG
+       	MODULE-COMPLIANCE,
+       	OBJECT-GROUP,
+       	NOTIFICATION-GROUP
+       	        FROM SNMPv2-CONF
+       	TEXTUAL-CONVENTION,
+       	TruthValue,
+       	RowStatus
+       	        FROM SNMPv2-TC
+       	ifIndex, 
+       	InterfaceIndex
+	        FROM IF-MIB;
+
+oapmProtocolDiscoveryMIB MODULE-IDENTITY
+     LAST-UPDATED      "201612060000Z"
+     ORGANIZATION      "One Access Networks, Inc."
+     CONTACT-INFO
+         "	 OA NETWORKS
+
+         "
+
+     DESCRIPTION
+         "
+	 "
+    REVISION	"201612060000Z"
+    DESCRIPTION
+	" "
+	::= { oacMIBModules 2005 }
+--
+-- Textual Conventions
+--
+OapmProtocolIndex ::= TEXTUAL-CONVENTION
+    STATUS	current
+    DESCRIPTION
+	"An object which represents a unique 
+	identifier for a protocol or application 
+	which NetAPM currently recognizes.
+	
+	The value of this object is defined in 
+	the oapmSupportedProtocolsTable."
+    SYNTAX	Unsigned32
+  
+OapmProtocolName ::=	TEXTUAL-CONVENTION
+    STATUS	current
+    DESCRIPTION
+	"Name of an application or protocol, 
+	which NetAPM is capable of recognizing.
+	
+	For example: ftp, vdolive and citrix."
+    SYNTAX	OCTET STRING (SIZE (1..255))
+
+--
+-- Overview of MIB Objects:
+--
+
+oapmMIBObjects  	
+              OBJECT IDENTIFIER ::= { oapmProtocolDiscoveryMIB 1 }
+oapmMIBConformance 
+              OBJECT IDENTIFIER ::= { oapmProtocolDiscoveryMIB 2 }
+oapmStatus		
+              OBJECT IDENTIFIER ::= { oapmMIBObjects 1 }
+oapmAllStats 		
+              OBJECT IDENTIFIER ::= { oapmMIBObjects 2 }
+oapmSupportedProtocols
+              OBJECT IDENTIFIER ::= { oapmMIBObjects 3 }
+oapmMIBCompliances 
+              OBJECT IDENTIFIER ::= { oapmMIBConformance 1 }
+oapmMIBGroups      
+              OBJECT IDENTIFIER ::= { oapmMIBConformance 2 }
+
+
+-- The NetAPM Protocol Discovery Supported Protocols table
+--
+oapmSupportedProtocolsTable OBJECT-TYPE
+    SYNTAX		SEQUENCE OF OapmSupportedProtocolsEntry
+    MAX-ACCESS		not-accessible
+    STATUS      	current
+    DESCRIPTION
+	"The Supported Protocols table lists all the 
+	protocols and applications which NetAPM is currently
+	capable of recognizing."
+    ::= { oapmSupportedProtocols 1 }
+  
+oapmSupportedProtocolsEntry OBJECT-TYPE
+    SYNTAX     		OapmSupportedProtocolsEntry
+    MAX-ACCESS 		not-accessible
+    STATUS     		current
+    DESCRIPTION
+	"A entry in the Supported Protocols table reflecting
+	key information about a protocol."
+    INDEX { oapmSupportedProtocolsIndex }
+    ::= { oapmSupportedProtocolsTable 1 }
+ 
+OapmSupportedProtocolsEntry ::= SEQUENCE {
+    oapmSupportedProtocolsIndex	OapmProtocolIndex,
+    oapmSupportedProtocolsName  OapmProtocolName
+    } 
+ 
+    oapmSupportedProtocolsIndex OBJECT-TYPE
+	SYNTAX		OapmProtocolIndex (1..1024)
+	MAX-ACCESS 	not-accessible
+	STATUS     	current
+	DESCRIPTION
+	    "A unique identifier of a row in this table.
+	    
+	    Thus it also represents a unique identifier for a
+	    protocol or application which NetAPM currently
+	    recognizes."
+	::= { oapmSupportedProtocolsEntry 1 }
+    
+    oapmSupportedProtocolsName OBJECT-TYPE
+	SYNTAX    	OapmProtocolName
+	MAX-ACCESS	read-only
+	STATUS    	current
+	DESCRIPTION
+	    "This object reflects the valid string of a
+	    protocol or application which NetAPM currently
+	    recognizes."
+	::= { oapmSupportedProtocolsEntry 2 }
+
+--
+-- The NetAPM Protocol Discovery Statistics group 
+--
+-- This group is comprised of two tables, oapmStatusTable 
+-- to enable Protocol Discovery, and 
+
+oapmStatusTable OBJECT-TYPE
+    SYNTAX    	SEQUENCE OF OapmStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+	"The oapmStatusTable is used to enable and
+	disable Protocol Discovery on an interface."
+    ::= { oapmStatus 1 }
+
+oapmStatusEntry OBJECT-TYPE
+    SYNTAX      OapmStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+	"An entry in the oapmStatusTable contains objects
+	for enabling or disabling Protocol Discovery on a
+	per interface basis."
+    INDEX { ifIndex }
+    ::= { oapmStatusTable 1 }
+
+OapmStatusEntry ::= SEQUENCE {
+    oapmStatusPdEnable  	TruthValue
+    }
+
+    oapmStatusPdEnable OBJECT-TYPE
+	SYNTAX      	TruthValue
+	MAX-ACCESS  	read-write
+	STATUS      	current
+	DESCRIPTION
+	    "This object is used to enable or disable 
+	    Protocol Discovery on an interface. 
+	    
+	    If set to 'true' - Protocol Discovery is 
+	    enabled on this Interface. 
+	    If set to 'false' - Protocol Discovery is 
+	    disabled on this Interface."
+	::= { oapmStatusEntry 1 }
+--
+-- oapmAllStatsTable to store Protocol Discovery
+-- statistics.
+--
+
+oapmAllStatsTable OBJECT-TYPE
+    SYNTAX		SEQUENCE OF OapmAllStatsEntry
+    MAX-ACCESS  	not-accessible
+    STATUS      	current
+    DESCRIPTION
+	"The oapmAllStatsTable contains all the statistics
+	available for all the protocols/applications currently
+	recognized by NetAPM Protocol Discovery for a particular 
+	interface.
+
+	In the event of an overflow, the 32 bit counters are not 
+	valid. There is no overflow support."
+    ::= { oapmAllStats 1 }
+
+oapmAllStatsEntry OBJECT-TYPE
+    SYNTAX      	OapmAllStatsEntry
+    MAX-ACCESS  	not-accessible
+    STATUS      	current
+    DESCRIPTION
+	"An entry in the oapmAllStatsTable table. This entry 
+	contains the statistics collected on all the protocols 
+	which NetAPM classifies for a particular interface."
+    INDEX { ifIndex, oapmAllStatsProtocolsIndex }
+    ::= { oapmAllStatsTable 1 }
+
+OapmAllStatsEntry ::= SEQUENCE {
+    oapmAllStatsProtocolsIndex	OapmProtocolIndex,
+ 	oapmAllStatsProtocolName    OapmProtocolName,
+    oapmAllStatsInPkts    	    Counter32,
+    oapmAllStatsOutPkts   	    Counter32,
+    oapmAllStatsInBytes    	    Counter32,
+    oapmAllStatsOutBytes	    Counter32,
+    oapmAllStatsHCInPkts 	    Counter64,
+    oapmAllStatsHCOutPkts     	Counter64,
+    oapmAllStatsHCInBytes     	Counter64,
+    oapmAllStatsHCOutBytes   	Counter64,
+    oapmAllStatsInBitRate       Counter32,
+    oapmAllStatsOutBitRate      Counter32
+    }
+
+    oapmAllStatsProtocolsIndex OBJECT-TYPE
+        SYNTAX		OapmProtocolIndex (1..1024)
+        MAX-ACCESS  	not-accessible
+        STATUS      	current
+        DESCRIPTION
+	    "An object which represents a unique 
+	    identifier for a protocol or application 
+	    which NetAPM currently recognizes.
+	
+	    This object is an index into the 
+	    SupportedProtocolsTable where details
+	    of the protocol can be found."
+	::= { oapmAllStatsEntry 1 }
+
+    oapmAllStatsProtocolName OBJECT-TYPE
+	    SYNTAX          OapmProtocolName
+        MAX-ACCESS      read-only
+        STATUS          current
+        DESCRIPTION
+	    "Name of the application or protocol, a 
+	    unique textual string, assigned in the
+	    cnpdSupportedProtocolsTable."
+	::= { oapmAllStatsEntry 2 }
+        
+    oapmAllStatsInPkts OBJECT-TYPE
+        SYNTAX		Counter32
+        UNITS  		"packets"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The packet count of inbound packets as 
+	    determined by Protocol Discovery."
+	::= { oapmAllStatsEntry 3 }
+
+    oapmAllStatsOutPkts OBJECT-TYPE
+        SYNTAX		Counter32
+        UNITS  		"packets"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The packet count of outbound packets as 
+	    determined by Protocol Discovery."
+	::= { oapmAllStatsEntry 4 }
+
+    oapmAllStatsInBytes OBJECT-TYPE
+        SYNTAX      	Counter32
+        UNITS       	"bytes"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The byte count of inbound octets as 
+	    determined by Protocol Discovery."
+	::= { oapmAllStatsEntry 5 }
+
+    oapmAllStatsOutBytes OBJECT-TYPE
+        SYNTAX      	Counter32
+        UNITS       	"bytes"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The byte count of outbound octets as
+	    determined by Protocol Discovery."
+	::= { oapmAllStatsEntry 6 }
+
+    oapmAllStatsHCInPkts OBJECT-TYPE
+        SYNTAX		Counter64
+        UNITS   	"packets"
+        MAX-ACCESS  	read-only
+        STATUS          current
+        DESCRIPTION
+	    "The packet count of inbound packets as 
+	    determined by Protocol Discovery.
+	    This is the 64-bit (High Capacity)
+	    version of oapmAllStatsInPkts."
+	::= { oapmAllStatsEntry 7 }
+
+    oapmAllStatsHCOutPkts OBJECT-TYPE
+        SYNTAX		Counter64
+        UNITS  		"packets"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The packet count of outbound packets as 
+	    determined by Protocol Discovery.
+	    This is the 64-bit (High Capacity)
+	    version of oapmAllStatsOutPkts."
+	::= { oapmAllStatsEntry 8 }
+
+    oapmAllStatsHCInBytes OBJECT-TYPE
+        SYNTAX      	Counter64
+        UNITS       	"bytes"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The byte count of inbound octets as 
+	    determined by Protocol Discovery.
+	    This is the 64-bit (High Capacity)
+	    version of oapmAllStatsInBytes."
+	::= { oapmAllStatsEntry 9 }
+
+    oapmAllStatsHCOutBytes OBJECT-TYPE
+        SYNTAX      	Counter64
+        UNITS       	"bytes"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The byte count of outbound octets as 
+	    determined by Protocol Discovery.
+	    This is the 64-bit (High Capacity)
+	    version of oapmAllStatsOutBytes."
+	::= { oapmAllStatsEntry 10 }
+
+    oapmAllStatsInBitRate OBJECT-TYPE
+        SYNTAX		    Counter32
+        UNITS       	"kilo bits per second"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The inbound bit rate as determined 
+	    by Protocol Discovery."
+	::= { oapmAllStatsEntry 11 }
+
+    oapmAllStatsOutBitRate OBJECT-TYPE
+        SYNTAX		    Counter32
+        UNITS       	"kilo bits per second"
+        MAX-ACCESS  	read-only
+        STATUS      	current
+        DESCRIPTION
+	    "The outbound bit rate as determined 
+	    by Protocol Discovery."
+	::= { oapmAllStatsEntry 12 }
+
+-- compliance statements
+
+oapmMIBCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+	"The compliance statement for entities that 
+	implement NetAPM Protocol Discovery on a Oa 
+	router."
+    MODULE -- this module
+    MANDATORY-GROUPS { 
+       oapmStatsGroup, 
+       oapmSupportedProtocolsGroup
+       }
+    ::= { oapmMIBCompliances 1 }
+
+oapmStatsGroup OBJECT-GROUP
+    OBJECTS {
+       oapmStatusPdEnable,
+       oapmAllStatsProtocolName,
+       oapmAllStatsInPkts,
+       oapmAllStatsOutPkts,
+       oapmAllStatsInBytes,
+       oapmAllStatsOutBytes,
+       oapmAllStatsHCInPkts,
+       oapmAllStatsHCOutPkts,
+       oapmAllStatsHCInBytes,
+       oapmAllStatsHCOutBytes,
+       oapmAllStatsInBitRate,
+       oapmAllStatsOutBitRate
+       }
+     STATUS      current
+     DESCRIPTION
+	 "Required objects to provide protocol 
+	 application discovery info."
+     ::= { oapmMIBGroups 1 }
+
+oapmSupportedProtocolsGroup OBJECT-GROUP
+    OBJECTS {
+       oapmSupportedProtocolsName
+       }		
+    STATUS  current
+    DESCRIPTION
+	"The set of objects describing a protocol 
+	or application."
+    ::= { oapmMIBGroups 6 }
+
+END

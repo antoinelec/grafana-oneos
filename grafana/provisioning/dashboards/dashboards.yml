@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: 'OneOS Dashboards'
+    orgId: 1
+    folder: ''                  # Leave empty for 'General' folder, or set a custom folder name
+    folderUid: ''
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: true

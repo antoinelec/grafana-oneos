@@ -1,0 +1,353 @@
+ONEACCESS-GLOBAL-REG DEFINITIONS ::= BEGIN
+
+--------------------------------------------------------------------
+-- History
+--------------------------------------------------------------------
+--   ONEOS_MIB_STD_V05.1.R005_E001
+--
+--   Creation date : 22/01/2003
+--   Modified for ONEOS_V31
+--   Modified for ONEOS_V32R2E20 (MIB QOS)
+--
+--   2004-12-13: Add oacExpIMIPSec
+--   2005-01-24: Add type one10 one30
+--   2005-03-10: Add vrrp mib
+--   2005-06-05: Add pstn isdn mibs
+--   2005-12-25: Add sysObjectId for One20,One80,One300
+--   2006-04-13: Add oacExpIMAtmAal5 (TF2967)
+--   2006-08-21: Add sysObjectId for One180
+--   2008-01-18: KMD_TF10288 Add dot11 mib
+--   2009-03-31: TF16991: added oacJitterStatsHistoryTable, oacJitterStatsHistoryEntry, updated oacJitterGeneralGroup
+--   2009-04-16: Add IM CellRadio (for OneCell35)
+--   2009-09-10: TF11960: add status noStatisticsAvailable for oacJitterStatsCompleted object
+--   2009-08-28: TF30635:added Deviation jitter objects to oacJitterStatsTable:
+--               oacJitterStatsSum2PosSD, oacJitterStatsSum2NegSD,
+--               oacJitterStatsSum2PosDS, oacJitterStatsSum2NegDS,
+--               oacJitterStatsDeviationSD, oacJitterStatsDeviationDS
+--   2009-09-16: Add sysObjectId for OC35
+--               Add oneaccess_cellular_mib
+--   2010-07-08: Add oacExpIMIPPerformanceCounters,oacExpIMEthernet, sysObjectID for 1440
+--   2010-08-10: Add oacOneOsDevice for 1440
+--   2011-04-29: Add oacVlanConfig oacBridgeObjects oacIpServicesConfig -comments-
+--   2017-05-25: Add sysObjectId for OneOs6 based products
+--   2021-01-10: Updated contact info, added oacExpIMDot1dBridge: base for all bridging related MIBs
+--   2024-08-08: Added objects based on oacExpIMAtmAal5, objects based on oacExpIMSystem,
+--               oacExpIMAtmAal5Notifications, objects based on oacExpIMIpAcl,
+--               objects based on oacExpIMEvents, Added few more objects based
+--               on oacExpIMManagement, object based on oacExpIMVoice, Added
+--               Object based on oacExpIMDot11, Objects based on oacExpIMCellRadio, 
+--               Objetcs based on oacExpInternalModules, object based on oacExpIMDot1dBridge, 
+--               Added oacQOS, oacExpIMIPVrfToIf, oacExpIMSfp, Added oapmProtocolDiscoveryMIB 
+--   2024-09-23: Add oacExpIMIpRouting,oacVrfMIB and oacbgp4V2 sub-tree
+--   2024-10-08: Added oacAlarmMIBRoot and also removed object identfiers of
+--               sub-level objects of a mib if all those are not spread across multiple mibs.
+
+--------------------------------------------------------------------
+-- Imports
+--------------------------------------------------------------------
+
+   IMPORTS
+      MODULE-IDENTITY, OBJECT-IDENTITY, enterprises
+         FROM SNMPv2-SMI;
+
+--------------------------------------------------------------------
+-- Module Entity
+--------------------------------------------------------------------
+
+   oneAccessMIBModule MODULE-IDENTITY
+      LAST-UPDATED    "202410080000Z"
+      ORGANIZATION    "OneAccess"
+      CONTACT-INFO    "support@ekinops.com"
+      DESCRIPTION     "This MIB module describes the top-level ONEACCESS architecture.
+                       Products sysObjectId are under oacRegistration
+                       Modules registrations are under oacRegistration.oacMIBModules
+                       Product Specicific MIBs are under oacProductSpecific
+                       Generic MIBs common to several products are under oacGeneric"
+
+      REVISION "202410080000Z"
+      DESCRIPTION
+         "Added oacAlarmMIBRoot and also removed object identfiers of
+          sub-level objects of a mib if all those are not spread across multiple mibs."
+
+      REVISION "202409230000Z"
+      DESCRIPTION
+         "Add oacExpIMIpRouting,oacVrfMIB and oacbgp4V2 sub-tree"
+
+      REVISION "202408080000Z"
+      DESCRIPTION
+         "Added objects based on oacExpIMAtmAal5, objects based on oacExpIMSystem, 
+          oacExpIMAtmAal5Notifications, objects based on oacExpIMIpAcl,
+          objects based on oacExpIMEvents, Added few more objects based
+          on oacExpIMManagement, object based on oacExpIMVoice, Added
+          Object based on oacExpIMDot11, Objects based on oacExpIMCellRadio,
+          Objetcs based on oacExpInternalModules, object based on oacExpIMDot1dBridge,
+          Added oacQOS, oacExpIMIPVrfToIf, oacExpIMSfp, Added oapmProtocolDiscoveryMIB"
+
+      REVISION "202311090000Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for LBB160, LBB165 and LBB460"
+
+      REVISION "202307200000Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for LBB360"
+
+      REVISION "202302070000Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for one2561, one422, OVP, ONEv600"
+
+      REVISION "202111240000Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for LBB500, One-5G and one2560"
+
+      REVISION "202101100000Z"
+      DESCRIPTION
+         "Updated contact info, added oacExpIMDot1dBridge: base for all bridging related MIBs"
+
+      REVISION "201706250000Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for OneOS6 based products"
+
+      REVISION "201310160000Z"
+      DESCRIPTION
+         "Update for 1440, Add new devices oacLbb133, oacLbb134, oacLbb140, oacLbb210, oacLbb310, oacLbb320, oacLbb330 , oacLbb4G ... see PR 65655"
+
+      REVISION "201306250000Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for Lbbxxx  see PR 60762"
+
+      REVISION "201304250000Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for one540,one1540,one1510,one1520  see PR 60762"
+
+      REVISION "201203200000Z"
+      DESCRIPTION
+         "Reserved the sub-tree 11 to new MIB oacExpIMIPVrfToIf  see PR 49262"
+
+      REVISION "201107290000Z"
+      DESCRIPTION
+         "Fixed compilation issues"
+
+      REVISION "201106150000Z"
+      DESCRIPTION
+         "Contact updated"
+
+      REVISION "201104100001Z"
+      DESCRIPTION
+         "Add oacVlanConfig oacBridgeObjects oacIpServicesConfig "
+
+      REVISION "201008100001Z"
+      DESCRIPTION
+         "Add oacOneOsDevice for 1440."
+
+      REVISION "201007080001Z"
+      DESCRIPTION
+         "Initial version."
+
+      ::= { oacMIBModules 1 }
+
+--------------------------------------------------------------------
+-- OneAccess private MIB
+--------------------------------------------------------------------
+
+   oneAccess OBJECT IDENTIFIER ::= { enterprises 13191 }
+   oacRegistration OBJECT IDENTIFIER ::= { oneAccess 1 }
+   oacMIBModules OBJECT IDENTIFIER ::= { oacRegistration 100 }
+
+   oacOneOsDevices OBJECT IDENTIFIER ::= { oacRegistration 1 }
+   oacOne10 OBJECT IDENTIFIER ::= { oacOneOsDevices 1 }
+   oacOne20 OBJECT IDENTIFIER ::= { oacOneOsDevices 2 }
+   oacOne30 OBJECT IDENTIFIER ::= { oacOneOsDevices 3 }
+   oacOne40 OBJECT IDENTIFIER ::= { oacOneOsDevices 4 }
+   oacOne50 OBJECT IDENTIFIER ::= { oacOneOsDevices 5 }
+   oacOne60 OBJECT IDENTIFIER ::= { oacOneOsDevices 6 }
+   oacOne20D OBJECT IDENTIFIER ::= { oacOneOsDevices 7 }
+   oacOne80 OBJECT IDENTIFIER ::= { oacOneOsDevices 8 }
+   oacOne80XM OBJECT IDENTIFIER ::= { oacOneOsDevices 9 }
+   oacOne100 OBJECT IDENTIFIER ::= { oacOneOsDevices 10 }
+   oacOne100D OBJECT IDENTIFIER ::= { oacOneOsDevices 11 }
+   oacOne150 OBJECT IDENTIFIER ::= { oacOneOsDevices 15 }
+   oacOne180 OBJECT IDENTIFIER ::= { oacOneOsDevices 18 }
+   oacOne200 OBJECT IDENTIFIER ::= { oacOneOsDevices 20 }
+   oacOneCell25 OBJECT IDENTIFIER ::= { oacOneOsDevices 25 }
+   oacOne300 OBJECT IDENTIFIER ::= { oacOneOsDevices 30 }
+   oacOneCell35 OBJECT IDENTIFIER ::= { oacOneOsDevices 35 }
+   oacOne400 OBJECT IDENTIFIER ::= { oacOneOsDevices 40 }
+   oacOne70 OBJECT IDENTIFIER ::= { oacOneOsDevices 70 }
+   oacOne800 OBJECT IDENTIFIER ::= { oacOneOsDevices 80 }
+   oacPBXplug8 OBJECT IDENTIFIER ::= { oacOneOsDevices 100 }
+   oacPBXplug30 OBJECT IDENTIFIER ::= { oacOneOsDevices 110 }
+   oacPBXPLUG-1P-2B OBJECT IDENTIFIER ::= { oacOneOsDevices 111 }
+   oacPBXPLUG-1P-2B-L OBJECT IDENTIFIER ::= { oacOneOsDevices 112 }
+   oacPBXPLUG-4B OBJECT IDENTIFIER ::= { oacOneOsDevices 113 }
+   oacPBXPLUG-4B-L OBJECT IDENTIFIER ::= { oacOneOsDevices 114 }
+   oacPBXPLUG-4B-V2 OBJECT IDENTIFIER ::= { oacOneOsDevices 115 }
+   oacPBXPLUG-6B OBJECT IDENTIFIER ::= { oacOneOsDevices 116 }
+   oacPBXPLUG-6B-L OBJECT IDENTIFIER ::= { oacOneOsDevices 117 }
+   oacPBXPLUG-212 OBJECT IDENTIFIER ::= { oacOneOsDevices 118 }
+   oacPBXPLUG-602 OBJECT IDENTIFIER ::= { oacOneOsDevices 119 }
+   oac1440 OBJECT IDENTIFIER ::= { oacOneOsDevices 1440 }
+   oacOne90 OBJECT IDENTIFIER ::= { oacOneOsDevices 90 }
+   oacLbb130 OBJECT IDENTIFIER ::= { oacOneOsDevices 130 }
+   oacLbb131 OBJECT IDENTIFIER ::= { oacOneOsDevices 131 }
+   oacLbb132 OBJECT IDENTIFIER ::= { oacOneOsDevices 132 }
+   oacLbb133 OBJECT IDENTIFIER ::= { oacOneOsDevices 133 }
+   oacLbb134 OBJECT IDENTIFIER ::= { oacOneOsDevices 134 }
+   oacLbb135 OBJECT IDENTIFIER ::= { oacOneOsDevices 135 }
+   oacLbb139 OBJECT IDENTIFIER ::= { oacOneOsDevices 139 }
+   oacLbb140 OBJECT IDENTIFIER ::= { oacOneOsDevices 140 }
+   oacLbb141 OBJECT IDENTIFIER ::= { oacOneOsDevices 141 }
+   oacLbb142 OBJECT IDENTIFIER ::= { oacOneOsDevices 142 }
+   oacLbb145 OBJECT IDENTIFIER ::= { oacOneOsDevices 145 }
+   oacLbb148 OBJECT IDENTIFIER ::= { oacOneOsDevices 148 }
+   oacLbb149 OBJECT IDENTIFIER ::= { oacOneOsDevices 149 }
+   oacLbb150 OBJECT IDENTIFIER ::= { oacOneOsDevices 150 }
+   oacLbb151 OBJECT IDENTIFIER ::= { oacOneOsDevices 151 }
+   oacLbb154 OBJECT IDENTIFIER ::= { oacOneOsDevices 154 }
+   oacLbb156 OBJECT IDENTIFIER ::= { oacOneOsDevices 156 }
+   oacLbb157 OBJECT IDENTIFIER ::= { oacOneOsDevices 157 }
+   oacLbb159 OBJECT IDENTIFIER ::= { oacOneOsDevices 159 }
+   oacLbb160 OBJECT IDENTIFIER ::= { oacOneOsDevices 160 }
+   oacLbb165 OBJECT IDENTIFIER ::= { oacOneOsDevices 165 }
+   oacLbb210 OBJECT IDENTIFIER ::= { oacOneOsDevices 210 }
+   oacLbb219 OBJECT IDENTIFIER ::= { oacOneOsDevices 219 }
+   oacLbb230 OBJECT IDENTIFIER ::= { oacOneOsDevices 230 }
+   oacLbb231 OBJECT IDENTIFIER ::= { oacOneOsDevices 231 }
+   oacLbb236 OBJECT IDENTIFIER ::= { oacOneOsDevices 236 }
+   oacLbb240 OBJECT IDENTIFIER ::= { oacOneOsDevices 240 }
+   oacLbb249 OBJECT IDENTIFIER ::= { oacOneOsDevices 249 }
+   oacLbb250 OBJECT IDENTIFIER ::= { oacOneOsDevices 250 }
+   oacLbb310 OBJECT IDENTIFIER ::= { oacOneOsDevices 310 }
+   oacLbb320 OBJECT IDENTIFIER ::= { oacOneOsDevices 320 }
+   oacLbb329 OBJECT IDENTIFIER ::= { oacOneOsDevices 329 }
+   oacLbb330 OBJECT IDENTIFIER ::= { oacOneOsDevices 330 }
+   oacLbb350 OBJECT IDENTIFIER ::= { oacOneOsDevices 350 }
+   oacLbb360 OBJECT IDENTIFIER ::= { oacOneOsDevices 360 }
+   oacLbb400 OBJECT IDENTIFIER ::= { oacOneOsDevices 400 }
+   oacLbb460 OBJECT IDENTIFIER ::= { oacOneOsDevices 460 }
+   oacLbb500 OBJECT IDENTIFIER ::= { oacOneOsDevices 500 }
+   oacOne410 OBJECT IDENTIFIER ::= { oacOneOsDevices 410 }
+   oacOne420 OBJECT IDENTIFIER ::= { oacOneOsDevices 420 }
+   oacOne422 OBJECT IDENTIFIER ::= { oacOneOsDevices 422 }
+   oacOne425 OBJECT IDENTIFIER ::= { oacOneOsDevices 425 }
+   oacOne540 OBJECT IDENTIFIER ::= { oacOneOsDevices 540 }
+   oacOne560 OBJECT IDENTIFIER ::= { oacOneOsDevices 560 }
+   oacOne700 OBJECT IDENTIFIER ::= { oacOneOsDevices 700 }
+   oacOVP OBJECT IDENTIFIER ::= { oacOneOsDevices 800 }
+   oacLbb4G OBJECT IDENTIFIER ::= { oacOneOsDevices 1000 }
+   oacOne1540 OBJECT IDENTIFIER ::= { oacOneOsDevices 1540 }
+   oacOne1510 OBJECT IDENTIFIER ::= { oacOneOsDevices 1510 }
+   oacOne1520 OBJECT IDENTIFIER ::= { oacOneOsDevices 1520 }
+   oacOne1560 OBJECT IDENTIFIER ::= { oacOneOsDevices 1560 }
+   oacPBXplug101 OBJECT IDENTIFIER ::= { oacOneOsDevices 1016 }
+   oacPBXplug102 OBJECT IDENTIFIER ::= { oacOneOsDevices 1017 }
+   oacOneVoip30 OBJECT IDENTIFIER ::= { oacOneOsDevices 1030 }
+   oacOneVoip120 OBJECT IDENTIFIER ::= { oacOneOsDevices 1120 }
+   oacOne2515 OBJECT IDENTIFIER ::= { oacOneOsDevices 2515 }
+   oacOne2501 OBJECT IDENTIFIER ::= { oacOneOsDevices 2501 }
+   oacOne2511 OBJECT IDENTIFIER ::= { oacOneOsDevices 2511 }
+   oacOne2520 OBJECT IDENTIFIER ::= { oacOneOsDevices 2520 }
+   oacOne2540 OBJECT IDENTIFIER ::= { oacOneOsDevices 2540 }
+   oacOne3540 OBJECT IDENTIFIER ::= { oacOneOsDevices 3540 }
+   oacWXeTIC  OBJECT IDENTIFIER ::= { oacOneOsDevices 5070 }
+   oacOne1526 OBJECT IDENTIFIER ::= { oacOneOsDevices 1526 }
+   oacOne526 OBJECT IDENTIFIER ::= { oacOneOsDevices 526 }
+   oacOne421 OBJECT IDENTIFIER ::= { oacOneOsDevices 421 }
+   oacOne521 OBJECT IDENTIFIER ::= { oacOneOsDevices 521 }
+   oacOne531 OBJECT IDENTIFIER ::= { oacOneOsDevices 531 }
+   oacOne2560 OBJECT IDENTIFIER ::= { oacOneOsDevices 2560 }
+   oacOne2561 OBJECT IDENTIFIER ::= { oacOneOsDevices 2561 }
+   oacOne-5G OBJECT IDENTIFIER ::= { oacOneOsDevices 2567 }
+   oacOnev600 OBJECT IDENTIFIER ::= { oacOneOsDevices 10000 }
+
+   oacProductSpecific OBJECT IDENTIFIER ::= { oneAccess 2 }
+
+   oacGeneric OBJECT IDENTIFIER ::= { oneAccess 3 }
+
+   oacGenProtocols OBJECT IDENTIFIER ::= { oacGeneric 1 }
+
+   oacGenManagement OBJECT IDENTIFIER ::= { oacGeneric 10 }
+
+   oacEmbeddedAgentMIB OBJECT IDENTIFIER ::= { oacGenManagement 1 }
+
+   oacCapabilities OBJECT IDENTIFIER ::= { oneAccess 4 }
+   oacRequirements OBJECT IDENTIFIER ::= { oneAccess 5 }
+   oacExperimental OBJECT IDENTIFIER ::= { oneAccess 10 }
+
+   oacExpNewMIBs OBJECT IDENTIFIER ::= { oacExperimental 1 }
+
+   oacExpInternetDrafts OBJECT IDENTIFIER ::= { oacExperimental 2 }
+
+   oacExpInternalModules OBJECT IDENTIFIER ::= { oacExperimental 3 }
+
+   oacExpIMIp                    OBJECT IDENTIFIER ::= { oacExpInternalModules 1 }
+   oacExpIMIpNat                 OBJECT IDENTIFIER ::=   { oacExpIMIp 1 }
+   oacExpIMIpNatStatistics       OBJECT IDENTIFIER ::=     { oacExpIMIpNat 1 }
+   oacExpIMIpNatNotifications    OBJECT IDENTIFIER ::=     { oacExpIMIpNat 2 }
+   oacExpIMIpAcl                 OBJECT IDENTIFIER ::=   { oacExpIMIp 2 }
+   oacExpIMIpAclStatistics       OBJECT IDENTIFIER ::=     { oacExpIMIpAcl 1 }
+   oacExpIMIpAclNotifications    OBJECT IDENTIFIER ::=     { oacExpIMIpAcl 2 }
+   oacExpIMIpAccountingStatistics OBJECT IDENTIFIER ::=    { oacExpIMIpAcl 3 }
+   oacAclConfig                  OBJECT IDENTIFIER ::=     { oacExpIMIpAcl 4 }
+   oacQOS                        OBJECT IDENTIFIER ::=   { oacExpIMIp 3 }
+   oacExpIMIPSec                 OBJECT IDENTIFIER ::=   { oacExpIMIp 4 }
+   oacExpIMIpVrrp                OBJECT IDENTIFIER ::=   { oacExpIMIp 5 }
+   oacExpIMVrrpNotifications     OBJECT IDENTIFIER ::=     { oacExpIMIpVrrp 1 }
+   oacExpIMZbFw                  OBJECT IDENTIFIER ::=   { oacExpIMIp 9 }
+   oacExpIMIPPerformanceCounters OBJECT IDENTIFIER ::=   { oacExpIMIp 10 }
+   oacExpIMIPVrfToIf             OBJECT IDENTIFIER ::=   { oacExpIMIp 11 }
+   oacExpIMIpRouting             OBJECT IDENTIFIER ::=   { oacExpIMIp 12 }
+   oacVrfMIB                     OBJECT IDENTIFIER ::=   { oacExpIMIp 13 }
+
+-- oacbgp                        OBJECT IDENTIFIER ::=   { oacExpIMIpRouting 1 }
+   oacbgp4V2                     OBJECT IDENTIFIER ::=   { oacExpIMIpRouting 2 }
+
+   oacExpIMAtm                   OBJECT IDENTIFIER ::= { oacExpInternalModules 2 }
+   oacExpIMAtmStatistics         OBJECT IDENTIFIER ::=   { oacExpIMAtm 1 }
+   oacExpIMAtmOamStatistics      OBJECT IDENTIFIER ::=   { oacExpIMAtm 2 }
+   oacExpIMAtmAal5               OBJECT IDENTIFIER ::=   { oacExpIMAtm 3 }
+
+   oacExpIMSystem                 OBJECT IDENTIFIER ::= { oacExpInternalModules 3 }
+   oacExpIMSysStatistics          OBJECT IDENTIFIER ::=   { oacExpIMSystem 1 }
+   oacExpIMSysHardwareDescription OBJECT IDENTIFIER ::=   { oacExpIMSystem 2 }
+   oacSHDSLMIBModule              OBJECT IDENTIFIER ::=   { oacExpIMSystem 3 }
+   oacExpIMSysIOContactsInfo      OBJECT IDENTIFIER ::=   { oacExpIMSystem 4 }
+   oacExpIMSysIOContactsTraps     OBJECT IDENTIFIER ::=   { oacExpIMSystem 5 }
+   oacExpIMSysRebootInfo          OBJECT IDENTIFIER ::=   { oacExpIMSystem 6 }
+
+   oacExpIMManagement             OBJECT IDENTIFIER ::= { oacExpInternalModules 4 }
+   oacExpIMEvents                 OBJECT IDENTIFIER ::=   { oacExpIMManagement 2 }
+
+   oacExpIMPing                   OBJECT IDENTIFIER ::=   { oacExpIMManagement 3 }
+   oacExpIMJitter                 OBJECT IDENTIFIER ::=   { oacExpIMManagement 5 }
+   oacExpIMConfigMgmt             OBJECT IDENTIFIER ::=   { oacExpIMManagement 6 }
+   oacSshConfig                   OBJECT IDENTIFIER ::=   { oacExpIMManagement 22 }
+   oacRttChkMIB                   OBJECT IDENTIFIER ::=   { oacExpIMManagement 1223 }
+
+   oacExpIMVoice                  OBJECT IDENTIFIER ::= { oacExpInternalModules 5 }
+   oacExpIMVoiceGlobalStat        OBJECT IDENTIFIER ::=   { oacExpIMVoice 1 }
+   oacExpIMVoiceStatistics        OBJECT IDENTIFIER ::=   { oacExpIMVoice 2 }
+
+   oacExpIMPstn                   OBJECT IDENTIFIER ::= { oacExpInternalModules 6 }
+   oacExpIMPstnNotifications      OBJECT IDENTIFIER ::=   { oacExpIMPstn 0 }
+
+   oacExpIMIsdn                   OBJECT IDENTIFIER ::= { oacExpInternalModules 7 }
+   oacExpIMIsdnNotifications      OBJECT IDENTIFIER ::=   { oacExpIMIsdn 0 }
+
+   oacExpIMDot11                  OBJECT IDENTIFIER ::= { oacExpInternalModules 8 }
+
+   oacExpIMCellRadio              OBJECT IDENTIFIER ::= { oacExpInternalModules 9 }
+
+   oacExpIMEthernet               OBJECT IDENTIFIER ::= { oacExpInternalModules 10 }
+
+   oacExpIMDot1dBridge            OBJECT IDENTIFIER ::= { oacExpInternalModules 11 }
+
+   oacExpIMSat                    OBJECT IDENTIFIER ::= { oacExpInternalModules 12 }
+
+   oacAlarmMIBRoot                OBJECT IDENTIFIER ::= { oacExpInternalModules 13 }
+
+   oacExpIMSfp                    OBJECT IDENTIFIER ::= { oacExpInternalModules 969 }
+
+   oapmProtocolDiscoveryMIB       OBJECT IDENTIFIER ::= { oacMIBModules 2005 }
+
+--------------------------------------------------------------------
+END

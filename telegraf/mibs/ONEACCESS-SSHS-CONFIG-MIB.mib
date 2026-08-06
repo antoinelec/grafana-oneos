@@ -1,0 +1,152 @@
+--          *****************************
+--          *                           *
+--          *         ONEOS MIB         *
+--          *                           *
+--          *****************************
+--
+--          Creation date : 07/08/2010
+--
+
+
+ONEACCESS-SSHS-CONFIG-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        MODULE-COMPLIANCE, OBJECT-GROUP			
+        FROM SNMPv2-CONF			
+    --
+        OBJECT-TYPE, MODULE-IDENTITY			
+        FROM SNMPv2-SMI			
+    --
+        TruthValue
+        FROM SNMPv2-TC
+    --
+        oacMIBModules, oacExpIMManagement
+        FROM ONEACCESS-GLOBAL-REG;
+
+	oacSshConfigMIB MODULE-IDENTITY
+
+        LAST-UPDATED    "202504220000Z"
+        ORGANIZATION    " OneAccess "
+        CONTACT-INFO
+           "Pascal KESTELOOT
+            Postal: ONE ACCESS
+                    381 Avenue du Général de Gaulle
+                    92140 Clamart, France
+		    FRANCE
+
+            Tel: (+33) 01 41 87 70 00
+            Fax: (+33) 01 41 87 74 00
+
+            E-mail: pascal.kesteloot@oneaccess-net.com"
+
+        DESCRIPTION
+                "Added new r/w object oacSshKeyEncrypAlgorithm 
+                 for displaying or setting algorithm used for encryption of ssh
+                 key"
+        REVISION        "202504220000Z"
+
+	DESCRIPTION
+	         "Modified existing MIB in OneOS5 and used in OneOS6
+                 as part of PRT-65425"
+	REVISION	"202103250000Z"
+
+	DESCRIPTION
+                "MIB for displaying and configuring
+		         Secure Shell (SSH) related features."
+                 ::= { oacMIBModules 2004 }
+
+
+--
+-- Node definitions
+--
+
+	-- 1.3.6.1.4.1.13191.10.3.4.22
+	oacSshConfig OBJECT IDENTIFIER ::= { oacExpIMManagement 22 }
+
+
+	-- 1.3.6.1.4.1.13191.10.3.4.22.1
+	oacSshConfigObjects OBJECT IDENTIFIER ::= { oacSshConfig 1  }
+
+
+--
+-- Ssh Configuration
+--
+
+	-- 1.3.6.1.4.1.13191.10.3.4.22.1.2
+	oacSshEnabled     OBJECT-TYPE
+		SYNTAX        TruthValue
+		MAX-ACCESS    read-write
+		STATUS        current
+		DESCRIPTION
+			          "Controls the operation of the Secure Shell server task 
+                  on the oneos. When enabled, the SSH server will accept
+                  connection requests and create a secure transport layer
+                  on which to transmit system configuration data."
+		DEFVAL        { false }
+		::= { oacSshConfigObjects 2 }
+
+
+	-- 1.3.6.1.4.1.13191.10.3.4.22.1.10
+	oacSshRsaKey      OBJECT-TYPE
+		SYNTAX        INTEGER
+                {
+                   keysize-0bits(0),
+                   keysize-1024bits(1024),
+                   keysize-2048bits(2048),
+                   keysize-4096bits(4096)
+                }
+		MAX-ACCESS    read-write
+		STATUS        current
+		DESCRIPTION
+                  "To generate a RSA public key." 
+		::= { oacSshConfigObjects 10 }
+
+
+	-- 1.3.6.1.4.1.13191.10.3.4.22.1.11
+	oacSshEcdsaKey    OBJECT-TYPE
+		SYNTAX        INTEGER
+                {
+                   keysize-0bits(0),
+                   keysize-256bits(256),
+                   keysize-384bits(384),
+                   keysize-521bits(521)
+                }
+		MAX-ACCESS    read-write
+		STATUS        current
+		DESCRIPTION	
+                  "To generate a ECDSA public key." 
+		::= { oacSshConfigObjects 11 }
+
+
+	-- 1.3.6.1.4.1.13191.10.3.4.22.1.12
+	oacSshZeroizeKey  OBJECT-TYPE
+		SYNTAX        TruthValue
+		MAX-ACCESS    read-write
+		STATUS        current
+		DESCRIPTION
+                  "To zeroize the SSH keys, independently of the key type."
+		DEFVAL        { false }
+		::= { oacSshConfigObjects 12 }
+
+        -- 1.3.6.1.4.1.13191.10.3.4.22.1.13
+        oacSshKeyEncrypAlgorithm OBJECT-TYPE
+                SYNTAX        INTEGER
+                {
+                   aes-256(1),
+                   aes-256-random(2)
+                }
+                MAX-ACCESS    read-write
+                STATUS        current
+                DESCRIPTION
+                   "Key Encryption algorithm to encrypt the ssh's rsa or 
+                   ecdsa keys with either aes-256 or aes-256-random algorithms.
+                   This, when queried, shows the algorithm chosen from both 
+                   snmp and from cli  "
+                ::= { oacSshConfigObjects 13 } 
+
+
+END
+
+--
+-- END OF ONE ACCESS SSH CONFIG MIB
+--

@@ -1,0 +1,674 @@
+-- *****************************************************************
+-- ACL-CONFIG MIB
+-- *****************************************************************
+
+
+ONEACCESS-ACL-CONFIG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-GROUP
+        FROM SNMPv2-CONF
+
+    IpAddress,
+    Integer32,
+    Counter32,
+    Counter64,
+    OBJECT-TYPE,
+    MODULE-IDENTITY
+        FROM SNMPv2-SMI
+
+    TEXTUAL-CONVENTION,
+    DisplayString,
+    RowStatus,
+    PhysAddress,
+    TruthValue
+        FROM SNMPv2-TC
+
+    InetAddressType,
+    InetPortNumber,
+    InetAddress
+        FROM INET-ADDRESS-MIB
+
+    Ipv6Address
+        FROM IPV6-TC
+
+    ifIndex
+        FROM IF-MIB
+
+    oacExpIMIpAcl, oacMIBModules
+        FROM ONEACCESS-GLOBAL-REG;
+
+oacAclConfigMIB MODULE-IDENTITY
+
+    LAST-UPDATED "202407110000Z"
+    ORGANIZATION "Ekinops"
+    CONTACT-INFO
+        "pascal.kesteloot@oneaccess-net.com"
+    DESCRIPTION
+        "This MIB defines configuration capabilities relating to Access List ."
+
+    ::= { oacMIBModules 680 }
+
+--
+-- Textual Conventions
+--
+
+TrafficDirection ::= TEXTUAL-CONVENTION
+        STATUS  current
+        DESCRIPTION
+            "An ACL is configured for the input or output directions."
+
+        SYNTAX   INTEGER {
+            input(1),
+            output(2)
+                         }
+
+OaAclType ::= TEXTUAL-CONVENTION
+        STATUS  current
+        DESCRIPTION
+            "An ACL can be ipv4 (standard or extended) or ipv6"
+
+        SYNTAX   INTEGER {
+            standard(1),
+            extended(2),
+            ipv6(3)
+                         }
+
+
+--
+-- Node definitions
+--
+oacAclConfig OBJECT IDENTIFIER ::= {    oacExpIMIpAcl 4  }
+
+oacAclConfigObjects      OBJECT IDENTIFIER ::= { oacAclConfig 1  }
+oacAclConfigConformance  OBJECT IDENTIFIER ::= { oacAclConfig 2  }
+
+--
+-- Standard ipV4 ACL Table
+--
+oacAclCfgTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacAclCfgEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for ACL configuration"
+    ::= { oacAclConfigObjects 1 }
+
+oacAclCfgEntry OBJECT-TYPE
+    SYNTAX OacAclCfgEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "An entry in the ACL Table."
+    INDEX { oacAclCfgType, oacAclCfgIndex }
+    ::= { oacAclCfgTable 1 }
+
+OacAclCfgEntry ::= SEQUENCE {
+        oacAclCfgType
+                OaAclType,
+        oacAclCfgIndex
+                INTEGER,
+        oacAclCfgName
+            DisplayString
+    }
+
+oacAclCfgType OBJECT-TYPE
+    SYNTAX          OaAclType
+    MAX-ACCESS      not-accessible
+    STATUS          current
+    DESCRIPTION
+        "This object defines the address family of the ACL."
+    ::= { oacAclCfgEntry 1 }
+
+oacAclCfgIndex OBJECT-TYPE
+    SYNTAX INTEGER (1..10000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "ACL index"
+    ::= { oacAclCfgEntry 2 }
+
+oacAclCfgName OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(1..100))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "User defined name for the ACL"
+    ::= { oacAclCfgEntry 3 }
+
+-- ipV4 Standard ACL rules Table
+--
+
+oacAclStdIpv4AclRuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacAclStdIpv4AclRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for standard IPv4 ACLs rules."
+    ::= { oacAclConfigObjects 2 }
+
+oacAclStdIpv4AclRuleEntry OBJECT-TYPE
+    SYNTAX OacAclStdIpv4AclRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A rule entry in the standard IPv4 ACL Table."
+    INDEX { oacAclCfgType, oacAclCfgIndex, oacAclStdIpv4AclRuleSeqIndex }
+    ::= { oacAclStdIpv4AclRuleTable 1 }
+
+OacAclStdIpv4AclRuleEntry ::=
+    SEQUENCE {
+        oacAclStdIpv4AclRuleSeqIndex
+                INTEGER,
+        oacAclStdIpv4AclRuleString
+            DisplayString,
+        oacAclStdIpv4AclRuleOpType
+            INTEGER,
+        oacAclStdIpv4AclRuleSrcIpAddress
+            IpAddress,
+        oacAclStdIpv4AclRuleSrcIpMask
+            IpAddress,
+        oacAclStdIpv4AclRuleLog
+            TruthValue,
+        oacAclStdIpv4AclStatsHits
+            Counter64
+    }
+
+oacAclStdIpv4AclRuleSeqIndex OBJECT-TYPE
+    SYNTAX INTEGER (1..10000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Explicit range of the rule and used as index"
+    ::= { oacAclStdIpv4AclRuleEntry 1 }
+
+oacAclStdIpv4AclRuleString OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(1..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "User defined string for this rule. Contain the remark string or the rule string."
+    ::= { oacAclStdIpv4AclRuleEntry 2 }
+
+oacAclStdIpv4AclRuleOpType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        deny(1),
+        permit(2),
+        remark(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The operation type (permit or deny) for this rule."
+    ::= { oacAclStdIpv4AclRuleEntry 3 }
+
+oacAclStdIpv4AclRuleSrcIpAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The source can be an :
+                A.B.C.D  IPv4 host address
+                A.B.C.D  Ipv4 subnet
+                any      All sources."
+    ::= { oacAclStdIpv4AclRuleEntry 4 }
+
+oacAclStdIpv4AclRuleSrcIpMask OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The source IP address mask if Ipv4 subnet is used for this rule."
+    DEFVAL { '00000000'H }
+    ::= { oacAclStdIpv4AclRuleEntry 5 }
+
+
+oacAclStdIpv4AclRuleLog OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Tell if log option is active or not for this rule."
+    DEFVAL { false }
+    ::= { oacAclStdIpv4AclRuleEntry 6 }
+
+oacAclStdIpv4AclStatsHits OBJECT-TYPE
+    SYNTAX          Counter64
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The total number of hits."
+    ::= { oacAclStdIpv4AclRuleEntry 7 }
+
+-- ipV4 Extended ACL rules Table
+--
+
+oacAclExtIpv4AclRuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacAclExtIpv4AclRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for extended IPv4 ACLs rules."
+    ::= { oacAclConfigObjects 3 }
+
+oacAclExtIpv4AclRuleEntry OBJECT-TYPE
+    SYNTAX OacAclExtIpv4AclRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A rule entry in the extended IPv4 ACL Table."
+    INDEX { oacAclCfgType, oacAclCfgIndex, oacAclExtIpv4AclRuleSeqIndex }
+    ::= { oacAclExtIpv4AclRuleTable 1 }
+
+OacAclExtIpv4AclRuleEntry ::=
+    SEQUENCE {
+        oacAclExtIpv4AclRuleSeqIndex
+            INTEGER,
+        oacAclExtIpv4AclRuleString
+            DisplayString,
+        oacAclExtIpv4AclRuleOpType
+            INTEGER,
+        oacAclExtIpv4AclRuleProto
+            INTEGER,
+        oacAclExtIpv4AclRuleSrcIpAddress
+            IpAddress,
+        oacAclExtIpv4AclRuleSrcIpMask
+            IpAddress,
+        oacAclExtIpv4AclRuleDstIpAddress
+            IpAddress,
+        oacAclExtIpv4AclRuleDstIpMask
+            IpAddress,
+        oacAclExtIpv4AclRuleProtoData
+            DisplayString,
+        oacAclExtIpv4AclRuleReflexive
+            TruthValue,
+        oacAclExtIpv4AclRuleFragment
+            TruthValue,
+        oacAclExtIpv4AclRuleLog
+            TruthValue,
+        oacAclExtIpv4AclRulePrioAction
+            INTEGER,
+        oacAclExtIpv4AclRulePrioValue
+            INTEGER,
+        oacAclExtIpv4AclStatsHits
+            Counter64
+    }
+
+oacAclExtIpv4AclRuleSeqIndex OBJECT-TYPE
+    SYNTAX INTEGER (1..10000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Explicit range of the rule and used as index"
+    ::= { oacAclExtIpv4AclRuleEntry 1 }
+
+oacAclExtIpv4AclRuleString OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(1..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "User defined string for this rule. Contain the remark string or the rule string."
+    ::= { oacAclExtIpv4AclRuleEntry 2 }
+
+
+oacAclExtIpv4AclRuleOpType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        deny(1),
+        permit(2),
+        remark(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The operation type (permit or deny) for this rule."
+    ::= { oacAclExtIpv4AclRuleEntry 3 }
+
+oacAclExtIpv4AclRuleProto OBJECT-TYPE
+    SYNTAX INTEGER (0..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The protocol to match specified by the rule."
+    ::= { oacAclExtIpv4AclRuleEntry 4 }
+
+oacAclExtIpv4AclRuleSrcIpAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The source IP address used for this rule."
+    ::= { oacAclExtIpv4AclRuleEntry 5 }
+
+oacAclExtIpv4AclRuleSrcIpMask OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The source wildcard mask used for this rule."
+    ::= { oacAclExtIpv4AclRuleEntry 6 }
+
+oacAclExtIpv4AclRuleDstIpAddress OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The destination IP address used for this rule."
+    ::= { oacAclExtIpv4AclRuleEntry 7 }
+
+oacAclExtIpv4AclRuleDstIpMask OBJECT-TYPE
+    SYNTAX IpAddress
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The destination wildcard mask used for this rule."
+    ::= { oacAclExtIpv4AclRuleEntry 8 }
+
+
+oacAclExtIpv4AclRuleProtoData OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object contains specifics informations to each protocol
+         mentionned in oacAclExtIpv4AclRuleProto or will be empty if
+        no specific information exists for this rule.
+
+        If the used protocol in the rule is :
+
+        > tcp, udp :
+            The object will contain the source port and/or the
+            destination port.
+
+            The source port is preceded by the keyword 'src', and the
+            destination port with the keyword 'dst'. Exemples :
+
+            'src:21 dst:12456'
+            'src:21 dst:1-100' wit destination port range from 1 to 100
+            'src:25'
+            'dst:99'
+
+        > icmp :
+            The object will contain the ICMP message Type and/or ICMP
+            message code.
+
+            The message type will be preceded by keyword 'type' and the
+            message code by keywork 'code'. Exemples :
+
+            'type:6 code:3'
+            'type:5'
+            'code:2'
+
+        > other cases :
+            the object will be empty.
+            "
+    ::= { oacAclExtIpv4AclRuleEntry 9 }
+
+oacAclExtIpv4AclRuleReflexive OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Tell if reflexive option is active or not for this rule."
+    DEFVAL { false }
+    ::= { oacAclExtIpv4AclRuleEntry 10 }
+
+oacAclExtIpv4AclRuleFragment OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Tell if fragment option is active or not for this rule"
+    DEFVAL { false }
+    ::= { oacAclExtIpv4AclRuleEntry 11 }
+
+oacAclExtIpv4AclRuleLog OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Tell if log option is active or not for this rule."
+    DEFVAL { false }
+    ::= { oacAclExtIpv4AclRuleEntry 12 }
+
+
+oacAclExtIpv4AclRulePrioAction OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        precedence(2),
+        dscp(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The operation type priority for this rule."
+    ::= { oacAclExtIpv4AclRuleEntry 13 }
+
+oacAclExtIpv4AclRulePrioValue OBJECT-TYPE
+    SYNTAX          INTEGER (0..255)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object defines the value of the precedence or dscp field to be filtered."
+    ::= { oacAclExtIpv4AclRuleEntry 14 }
+
+oacAclExtIpv4AclStatsHits OBJECT-TYPE
+    SYNTAX          Counter64
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The total number of hits."
+    ::= { oacAclExtIpv4AclRuleEntry 15 }
+
+-- ipv6 ACL rules Table
+--
+
+oacAclIpv6AclRuleTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF OacAclIpv6AclRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "Table for extended IPv6 ACLs rules."
+    ::= { oacAclConfigObjects 4 }
+
+oacAclIpv6AclRuleEntry OBJECT-TYPE
+    SYNTAX OacAclIpv6AclRuleEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION
+        "A rule entry in the ipv6 ACL Table."
+    INDEX { oacAclCfgType, oacAclCfgIndex, oacAclIpv6AclRuleSeqIndex }
+    ::= { oacAclIpv6AclRuleTable 1 }
+
+OacAclIpv6AclRuleEntry ::=
+    SEQUENCE {
+        oacAclIpv6AclRuleSeqIndex
+            INTEGER,
+        oacAclIpv6AclRuleString
+            DisplayString,
+        oacAclIpv6AclRuleOpType
+            INTEGER,
+        oacAclIpv6AclRuleProto
+            INTEGER,
+        oacAclIpv6AclRuleSrcIpAddress
+            Ipv6Address,
+        oacAclIpv6AclRuleSrcPrefixLength
+            INTEGER,
+        oacAclIpv6AclRuleDstIpAddress
+            Ipv6Address,
+        oacAclIpv6AclRuleDstPrefixLength
+            INTEGER,
+        oacAclIpv6AclRuleProtoData
+            DisplayString,
+        oacAclIpv6AclRuleReflexive
+            TruthValue,
+        oacAclIpv6AclRuleLog
+            TruthValue,
+        oacAclIpv6AclRulePrioAction
+            INTEGER,
+        oacAclIpv6AclRulePrioValue
+            INTEGER,
+        oacAclIpv6AclStatsHits
+            Counter64
+    }
+
+oacAclIpv6AclRuleSeqIndex OBJECT-TYPE
+    SYNTAX INTEGER (1..10000)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Explicit range of the rule and used as index"
+    ::= { oacAclIpv6AclRuleEntry 1 }
+
+oacAclIpv6AclRuleString OBJECT-TYPE
+    SYNTAX DisplayString (SIZE(1..255))
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "User defined string for this rule. Contain the remark string or the rule string."
+    ::= { oacAclIpv6AclRuleEntry 2 }
+
+
+oacAclIpv6AclRuleOpType OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        deny(1),
+        permit(2),
+        remark(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The operation type (permit or deny) for this rule."
+    ::= { oacAclIpv6AclRuleEntry 3 }
+
+oacAclIpv6AclRuleProto OBJECT-TYPE
+    SYNTAX INTEGER (0..255)
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The protocol to match specified by the rule."
+    ::= { oacAclIpv6AclRuleEntry 4 }
+
+oacAclIpv6AclRuleSrcIpAddress OBJECT-TYPE
+    SYNTAX Ipv6Address
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The source IP address used for this rule."
+    ::= { oacAclIpv6AclRuleEntry 5 }
+
+oacAclIpv6AclRuleSrcPrefixLength OBJECT-TYPE
+    SYNTAX INTEGER (0..128)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object determines the number of bits in the field oacAclIpv6AclRuleSrcIpAddress to be checked."
+    ::= { oacAclIpv6AclRuleEntry 6 }
+
+oacAclIpv6AclRuleDstIpAddress OBJECT-TYPE
+    SYNTAX Ipv6Address
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The destination IP address used for this rule."
+    ::= { oacAclIpv6AclRuleEntry 7 }
+
+oacAclIpv6AclRuleDstPrefixLength OBJECT-TYPE
+    SYNTAX INTEGER (0..128)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object determines the number of bits in the field oacAclIpv6AclRuleDstIpAddress to be checked."
+    ::= { oacAclIpv6AclRuleEntry 8 }
+
+oacAclIpv6AclRuleProtoData OBJECT-TYPE
+    SYNTAX DisplayString
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "This object contains specifics informations to each protocol
+         mentionned in oacAclIpv6AclRuleProto or will be empty if
+        no specific information exists for this rule.
+
+        If the used protocol in the rule is :
+
+        > tcp, udp :
+            The object will contain the source port and/or the
+            destination port.
+
+            The source port is preceded by the keyword 'src', and the
+            destination port with the keyword 'dst'. Examples :
+
+            'src:21 dst:12456'
+            'src:21 dst:1-100' with destination port range from 1 to 100
+            'src:25'
+            'dst:99'
+
+        > icmp :
+            The object will contain the ICMP message Type and/or ICMP
+            message code.
+
+            The message type will be preceded by keyword 'type' and the
+            message code by keywork 'code'. Exemples :
+
+            'type:6 code:3'
+            'type:5'
+            'code:2'
+
+        > other cases :
+            the object will be empty.
+            "
+    ::= { oacAclIpv6AclRuleEntry 9 }
+
+oacAclIpv6AclRuleReflexive OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Tell if reflexive option is active or not for this rule."
+    DEFVAL { false }
+    ::= { oacAclIpv6AclRuleEntry 10 }
+
+oacAclIpv6AclRuleLog OBJECT-TYPE
+    SYNTAX TruthValue
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "Tell if log option is active or not for this rule."
+    DEFVAL { false }
+    ::= { oacAclIpv6AclRuleEntry 12 }
+
+oacAclIpv6AclRulePrioAction OBJECT-TYPE
+    SYNTAX INTEGER
+        {
+        none(1),
+        precedence(2),
+        dscp(3)
+        }
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The operation type priority for this rule."
+    ::= { oacAclIpv6AclRuleEntry 13 }
+
+oacAclIpv6AclRulePrioValue OBJECT-TYPE
+    SYNTAX          INTEGER (0..255)
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "This object defines the value of the precedence or dscp field to be filtered."
+    ::= { oacAclIpv6AclRuleEntry 14 }
+
+oacAclIpv6AclStatsHits OBJECT-TYPE
+    SYNTAX          Counter64
+    MAX-ACCESS      read-only
+    STATUS          current
+    DESCRIPTION
+        "The total number of hits."
+    ::= { oacAclIpv6AclRuleEntry 15 }
+
+
+END

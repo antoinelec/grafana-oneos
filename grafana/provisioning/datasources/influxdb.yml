@@ -1,0 +1,15 @@
+apiVersion: 1
+datasources:
+  - name: InfluxDBv2
+    type: influxdb
+    access: proxy
+    editable: true
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: MyOrg
+      defaultBucket: oneos_snmp
+      tlsSkipVerify: true
+      httpMode: POST
+    secureJsonData:
+      token: 3e1c6820c07428eae1d6d48b6197e225

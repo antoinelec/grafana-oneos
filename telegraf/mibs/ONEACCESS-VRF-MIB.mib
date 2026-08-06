@@ -1,0 +1,66 @@
+ONEACCESS-VRF-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+        OBJECT-TYPE, MODULE-IDENTITY, Integer32
+            FROM SNMPv2-SMI
+        oacExpIMIp
+            FROM ONEACCESS-GLOBAL-REG
+        OacExpVrfName
+            FROM ONEACCESS-VRF-TO-IF-MIB;
+
+    oacVrfMIB MODULE-IDENTITY
+        LAST-UPDATED "202409230000Z"
+        ORGANIZATION "OneAccess"
+        CONTACT-INFO "support@ekinops.com"
+        DESCRIPTION
+           "This MIB module lists all the VRF Name to VRF index mapping."
+
+	::= { oacExpIMIp 13 }
+
+--
+-- Node definitions
+--
+
+    oacVrfTable OBJECT-TYPE
+        SYNTAX SEQUENCE OF OacVrfEntry
+        MAX-ACCESS not-accessible
+        STATUS current
+        DESCRIPTION
+           "Table of correspondence between VRF name and VRF identifier"
+        ::= { oacVrfMIB 1 }
+
+    oacVrfEntry OBJECT-TYPE
+        SYNTAX      OacVrfEntry
+        MAX-ACCESS  not-accessible
+        STATUS      current
+        DESCRIPTION
+           "Each entry corresponds to a VRF identifier and corresponding VRF name"
+        INDEX { oacVrfid }
+        ::= { oacVrfTable 1 }
+
+    OacVrfEntry ::= SEQUENCE {
+            oacVrfid
+                Integer32,
+            oacVrfname
+                OacExpVrfName
+            }
+
+    oacVrfid OBJECT-TYPE
+        SYNTAX     Integer32 (1 .. 2147483647)
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+                "An identifier that is assigned to each VRF instance and is used to uniquely identify it."
+        ::= { oacVrfEntry 1 }
+
+    oacVrfname OBJECT-TYPE
+        SYNTAX     OacExpVrfName
+        MAX-ACCESS read-only
+        STATUS     current
+        DESCRIPTION
+                "The human-readable name of the VRF instance. It uniquely identifies the VRF instance in the system."
+        ::= { oacVrfEntry 2 }
+
+END
+
+---

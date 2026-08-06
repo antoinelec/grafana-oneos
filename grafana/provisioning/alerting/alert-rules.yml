@@ -1,0 +1,216 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: one_min
+      folder: alarms
+      interval: 1m
+      rules:
+        - uid: efg0jt51p5zi8b
+          title: Utilisation Mémoire
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P695F147C476753D2
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: "memFree =\r\nfrom(bucket: \"oneos_snmp\")\r\n  |> range(start: -100m)\r\n  |> filter(fn: (r) => r._field == \"memFree\")\r\n  |> group(columns:[\"hostname\"])\r\n  |> last()\r\n\r\nmemTotal =\r\nfrom(bucket: \"oneos_snmp\")\r\n  |> range(start: -100m)\r\n  |> filter(fn: (r) => r._field == \"memTotal\")\r\n  |> group(columns:[\"hostname\"])\r\n  |> last()\r\n\r\njoin(\r\n  tables: {free: memFree, total: memTotal},\r\n  on: [\"hostname\"]\r\n)\r\n|> map(fn:(r)=>({\r\n    _time: r._time_free,\r\n    hostname: r.hostname,\r\n    mem_used_percent: 100.0 * (float(v:r._value_total - r._value_free) / float(v:r._value_total))\r\n}))\r\n|> keep(columns: [\"_time\", \"mem_used_percent\", \"hostname\"])"
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 85
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations:
+            summary: Device {{ $labels.hostname }} memory is low ({{ printf "%.0f" $values.A[0].Value }} % or B = {{$values.B.Value}})
+          isPaused: false
+        - uid: ffg0jwfvzr7y8e
+          title: CPU
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P695F147C476753D2
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: "from(bucket: \"oneos_snmp\")\r\n  |> range(start: -100m)\r\n  |> filter(fn: (r) => r._measurement == \"cpu\")\r\n  |> filter(fn: (r) => r._field == \"oacSysCpuUsedValue\")\r\n  |> group(columns: [\"hostname\"])\r\n  |> last()\r\n  |> keep(columns: [\"_time\", \"_value\", \"hostname\"])\r\n  "
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 85
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations:
+            summary: |-
+                Device {{ $labels.hostname }} CPU is too high ({{ printf "%.0f" $values.A.Value }}%)
+                Threshold: 85%
+          isPaused: false
+        - uid: efg0k25cn34e8f
+          title: Routeur injoignable
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P695F147C476753D2
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: "from(bucket: \"oneos_snmp\")\r\n  |> range(start: -10d)\r\n  |> filter(fn: (r) => r._measurement == \"interface\")\r\n  |> filter(fn: (r) => r._field == \"uptime\")\r\n  |> group(columns: [\"hostname\"])\r\n  |> last()\r\n  |> map(fn: (r) => ({\r\n        hostname: r.hostname,\r\n        down_since: (int(v: now()) - int(v: r._time)) / 1000000000\r\n  }))\r\n  |> keep(columns: [\"_time\", \"_value\", \"hostname\", \"down_since\"])\r\n  |> group()    "
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 150
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations:
+            summary: |-
+                Device {{ $labels.hostname }} is DOWN
+                Down since {{ printf "%.0f" $values.A.Value }} seconds
+          isPaused: false
+
