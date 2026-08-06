@@ -6,7 +6,7 @@ groups:
       interval: 1m
       rules:
         - uid: efg0jt51p5zi8b
-          title: Utilisation Mémoire
+          title: memory Utilization
           condition: C
           data:
             - refId: A
@@ -144,7 +144,7 @@ groups:
                 Threshold: 85%
           isPaused: false
         - uid: efg0k25cn34e8f
-          title: Routeur injoignable
+          title: Unreachable device
           condition: C
           data:
             - refId: A
