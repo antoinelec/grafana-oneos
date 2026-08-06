@@ -45,6 +45,13 @@ This is an example with SNMPv1/v2. In OneOS device, a community should be set:
 ```cmd
 conf t
 snmp set-read-community public
+! if monitoring probe:
+ppa-pm session 1
+ target address <target-address>
+ frequency 10
+ interval  100
+exit
+ppa-pm schedule 1 start now
 end
 ```
 
