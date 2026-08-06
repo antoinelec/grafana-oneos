@@ -1,0 +1,5 @@
+.env
+*.key
+*.crt
+grafana/server.key
+grafana/server.crt
